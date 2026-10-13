@@ -1,0 +1,9 @@
+width=520
+height=380
+location=center
+show=drun
+prompt=run
+allow_images=true
+image_size=24
+insensitive=true
+no_actions=true

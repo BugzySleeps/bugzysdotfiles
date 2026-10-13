@@ -1,0 +1,52 @@
+# Medieval forest: gilded brass fading into deep moss
+wallpaper = "wallpaper.jpg"
+wofi_font = '"Cinzel", "EB Garamond", "DejaVu Serif"'
+
+[colors]
+bg0 = "#0f140e"
+bg1 = "#161d14"
+bg2 = "#1f291c"
+bg3 = "#2c3a27"
+border = "#3f5436"
+accent = "#9bc27a"
+accent2 = "#6d8f55"
+fg = "#c8dcb4"
+dim = "#66745e"
+bright = "#d4ecbc"
+
+[hypr]
+border_active = ["#9bc27a", "#4f6b40", "#1f291c"]
+border_angle = 135
+border_inactive = "#2a3324cc"
+shadow = "#060a05dd"
+rounding = 4
+
+[term]
+bg = "#141a12"
+fg = "#d8cfb0"
+cursor = "#9bc27a"
+selection = "#6d8f55"
+url = "#8fae6a"
+color0 = "#1c2419"
+color1 = "#a8432f"
+color2 = "#6b8a4a"
+color3 = "#c9a24a"
+color4 = "#5b7a7a"
+color5 = "#8a5a6a"
+color6 = "#5f8a6a"
+color7 = "#d8cfb0"
+color8 = "#4a5d3a"
+color9 = "#c8614b"
+color10 = "#8fae6a"
+color11 = "#e6c370"
+color12 = "#7fa0a0"
+color13 = "#a87a8a"
+color14 = "#85ae8e"
+color15 = "#efe6c8"
+
+[fastfetch]
+logo1 = "#6b8a4a"
+logo2 = "#9bc27a"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

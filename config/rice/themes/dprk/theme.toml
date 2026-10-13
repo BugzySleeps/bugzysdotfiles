@@ -1,0 +1,52 @@
+# DPRK poster: flag red and white stripes on deep navy
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#10122a"
+bg1 = "#171a38"
+bg2 = "#1f2346"
+bg3 = "#2a2f5c"
+border = "#3d4380"
+accent = "#e8302d"
+accent2 = "#f4eeef"
+fg = "#e8e3e8"
+dim = "#6b748c"
+bright = "#ffffff"
+
+[hypr]
+border_active = ["#e21f20", "#faf4f5", "#323967"]
+border_angle = 160
+border_inactive = "#2a2f5ccc"
+shadow = "#07081add"
+rounding = 3
+
+[term]
+bg = "#161935"
+fg = "#ece6e8"
+cursor = "#e8302d"
+selection = "#e21f20"
+url = "#8f9bd8"
+color0 = "#23274a"
+color1 = "#e21f20"
+color2 = "#7fa36b"
+color3 = "#e0b25a"
+color4 = "#5664b0"
+color5 = "#b0473d"
+color6 = "#6b8fb0"
+color7 = "#c4a7a1"
+color8 = "#4a5080"
+color9 = "#ff4a43"
+color10 = "#9cc286"
+color11 = "#f2cb78"
+color12 = "#7f8de0"
+color13 = "#d4766b"
+color14 = "#92b4d4"
+color15 = "#faf4f5"
+
+[fastfetch]
+logo1 = "#faf4f5"
+logo2 = "#e21f20"
+separator = " ★ "
+rule = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+symbol = "star"

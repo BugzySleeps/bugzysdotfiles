@@ -1,0 +1,52 @@
+# Nostalgia: flat sage and charcoal shards, thin black outlines, sharp corners
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#262626"
+bg1 = "#2e2e2e"
+bg2 = "#353535"
+bg3 = "#3e3e3e"
+border = "#4d5452"
+accent = "#9fbab3"
+accent2 = "#768b86"
+fg = "#dfe6e3"
+dim = "#6e7774"
+bright = "#c4d8d2"
+
+[hypr]
+border_active = ["#9fbab3", "#768b86", "#3e3e3e"]
+border_angle = 125
+border_inactive = "#111111cc"
+shadow = "#0a0a0acc"
+rounding = 0
+
+[term]
+bg = "#2b2b2b"
+fg = "#dfe6e3"
+cursor = "#9fbab3"
+selection = "#768b86"
+url = "#9fbab3"
+color0 = "#3e3e3e"
+color1 = "#b07a74"
+color2 = "#8aa889"
+color3 = "#c2b48a"
+color4 = "#7f98a8"
+color5 = "#a48aa0"
+color6 = "#768b86"
+color7 = "#c9d0cd"
+color8 = "#5c6361"
+color9 = "#c8948e"
+color10 = "#a3c2a2"
+color11 = "#d8cba2"
+color12 = "#9ab2c2"
+color13 = "#bea4ba"
+color14 = "#9fbab3"
+color15 = "#eef2f0"
+
+[fastfetch]
+logo1 = "#768b86"
+logo2 = "#c9d0cd"
+separator = " : "
+rule = "--------------------------"
+symbol = "square"

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# screenshot [region|full|window] — save to ~/Pictures/Screenshots and copy to clipboard
+# needs: grim slurp wl-clipboard
+
+mode=${1:-region}
+dir=~/Pictures/Screenshots
+file="$dir/$(date +%Y-%m-%d_%H-%M-%S).png"
+mkdir -p "$dir"
+
+notify() { timeout 3 notify-send -a screenshot "$@" 2>/dev/null & }
+
+for dep in grim slurp wl-copy; do
+    if ! command -v "$dep" >/dev/null; then
+        notify "Screenshot failed" "missing $dep — run: sudo pacman -S grim slurp wl-clipboard"
+        exit 1
+    fi
+done
+
+case $mode in
+    region) geom=$(slurp -d -b 00000066 -c ffffffcc) || exit 0 ;;   # Esc cancels
+    window) geom=$(hyprctl activewindow -j | python3 -c \
+                'import json,sys; w=json.load(sys.stdin); print(f"{w[\"at\"][0]},{w[\"at\"][1]} {w[\"size\"][0]}x{w[\"size\"][1]}")') || exit 1 ;;
+    full)   geom= ;;
+    *)      echo "usage: screenshot [region|full|window]"; exit 1 ;;
+esac
+
+if [ -n "$geom" ]; then grim -g "$geom" "$file"; else grim "$file"; fi || exit 1
+wl-copy < "$file"
+notify -i "$file" "Screenshot saved" "$file"

@@ -1,0 +1,52 @@
+# Monochrome: black-and-white Fuji above a sea of clouds, dark pines
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#040404"
+bg1 = "#0e0e0e"
+bg2 = "#171717"
+bg3 = "#2f2f2f"
+border = "#505050"
+accent = "#eaeaea"
+accent2 = "#909090"
+fg = "#cecece"
+dim = "#5e5e5e"
+bright = "#ffffff"
+
+[hypr]
+border_active = ["#eaeaea", "#909090", "#2f2f2f"]
+border_angle = 90
+border_inactive = "#171717cc"
+shadow = "#000000ee"
+rounding = 4
+
+[term]
+bg = "#0b0b0b"
+fg = "#d6d6d6"
+cursor = "#eaeaea"
+selection = "#707070"
+url = "#afafaf"
+color0 = "#1e1e1e"
+color1 = "#a58a8a"
+color2 = "#8fa08f"
+color3 = "#aaa48c"
+color4 = "#8a94a6"
+color5 = "#a08ea2"
+color6 = "#8ea4a4"
+color7 = "#bdbdbd"
+color8 = "#505050"
+color9 = "#c4a8a8"
+color10 = "#adbfad"
+color11 = "#c8c2aa"
+color12 = "#a8b2c4"
+color13 = "#beacc0"
+color14 = "#acc2c2"
+color15 = "#f2f2f2"
+
+[fastfetch]
+logo1 = "#707070"
+logo2 = "#eaeaea"
+separator = " / "
+rule = "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
+symbol = "block"

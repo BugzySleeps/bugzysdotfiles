@@ -1,0 +1,52 @@
+# Dr. Chaz: electric-green glow in a dim record store, amber lamps, brown crates, faded denim
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#0b0c05"
+bg1 = "#121307"
+bg2 = "#1a1a0c"
+bg3 = "#2b2614"
+border = "#4c3316"
+accent = "#8ff04a"
+accent2 = "#e0a040"
+fg = "#e8e4cc"
+dim = "#6e6a52"
+bright = "#d2e492"
+
+[hypr]
+border_active = ["#8ff04a", "#e0a040", "#4c3316"]
+border_angle = 110
+border_inactive = "#2b2614cc"
+shadow = "#050602ee"
+rounding = 6
+
+[term]
+bg = "#101106"
+fg = "#e8e4cc"
+cursor = "#8ff04a"
+selection = "#649a3c"
+url = "#9fb8cc"
+color0 = "#22210f"
+color1 = "#c8442e"
+color2 = "#649a3c"
+color3 = "#e0a040"
+color4 = "#6f8aa0"
+color5 = "#9a6a7a"
+color6 = "#6a9a8a"
+color7 = "#c8c4a8"
+color8 = "#5c5329"
+color9 = "#e86a50"
+color10 = "#8ff04a"
+color11 = "#f2c46a"
+color12 = "#9fb8cc"
+color13 = "#c08ea0"
+color14 = "#90c2b0"
+color15 = "#f4f0dc"
+
+[fastfetch]
+logo1 = "#8f6d41"
+logo2 = "#8ff04a"
+separator = " ♪ "
+rule = "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+symbol = "circle"

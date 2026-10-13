@@ -1,0 +1,52 @@
+# Catppuccin Mocha
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#11111b"
+bg1 = "#181825"
+bg2 = "#1e1e2e"
+bg3 = "#313244"
+border = "#45475a"
+accent = "#cba6f7"
+accent2 = "#89b4fa"
+fg = "#cdd6f4"
+dim = "#6c7086"
+bright = "#f5c2e7"
+
+[hypr]
+border_active = ["#cba6f7", "#89b4fa"]
+border_angle = 45
+border_inactive = "#313244cc"
+shadow = "#11111bdd"
+rounding = 10
+
+[term]
+bg = "#1e1e2e"
+fg = "#cdd6f4"
+cursor = "#f5e0dc"
+selection = "#cba6f7"
+url = "#89b4fa"
+color0 = "#45475a"
+color1 = "#f38ba8"
+color2 = "#a6e3a1"
+color3 = "#f9e2af"
+color4 = "#89b4fa"
+color5 = "#f5c2e7"
+color6 = "#94e2d5"
+color7 = "#bac2de"
+color8 = "#585b70"
+color9 = "#f38ba8"
+color10 = "#a6e3a1"
+color11 = "#f9e2af"
+color12 = "#89b4fa"
+color13 = "#f5c2e7"
+color14 = "#94e2d5"
+color15 = "#a6adc8"
+
+[fastfetch]
+logo1 = "#cba6f7"
+logo2 = "#f5c2e7"
+separator = " ❯ "
+rule = "╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌"
+symbol = "circle"

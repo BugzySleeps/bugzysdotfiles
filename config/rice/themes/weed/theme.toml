@@ -1,0 +1,52 @@
+# Birch Weed University: lime glow, leaf greens, glitchy cyan/red fringes
+wallpaper_cmd = "linux-wallpaperengine --screen-root eDP-1 --fps 30 --bg 2104261237 --silent --disable-parallax --disable-particles --disable-mouse"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#08110a"
+bg1 = "#0e1a10"
+bg2 = "#142617"
+bg3 = "#1d3622"
+border = "#2f5a36"
+accent = "#6cf03c"
+accent2 = "#46c8c8"
+fg = "#e4f5e1"
+dim = "#6a8a6c"
+bright = "#b8ff9a"
+
+[hypr]
+border_active = ["#6cf03c", "#46c8c8", "#ff3d5a"]
+border_angle = 45
+border_inactive = "#1d3622cc"
+shadow = "#040a05dd"
+rounding = 12
+
+[term]
+bg = "#0e1a10"
+fg = "#e4f5e1"
+cursor = "#6cf03c"
+selection = "#469c48"
+url = "#46c8c8"
+color0 = "#1a2c1d"
+color1 = "#ff3d5a"
+color2 = "#469c48"
+color3 = "#adb662"
+color4 = "#5fadaf"
+color5 = "#a678c9"
+color6 = "#46c8c8"
+color7 = "#bad2b8"
+color8 = "#345c3b"
+color9 = "#ff6b80"
+color10 = "#6cf03c"
+color11 = "#e0e86a"
+color12 = "#86d4d6"
+color13 = "#c79ae8"
+color14 = "#7ff0f0"
+color15 = "#eff6ef"
+
+[fastfetch]
+logo1 = "#469c48"
+logo2 = "#6cf03c"
+separator = " ~ "
+rule = "≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈"
+symbol = "triangle"

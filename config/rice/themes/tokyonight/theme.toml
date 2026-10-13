@@ -1,0 +1,52 @@
+# Tokyo Night
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#16161e"
+bg1 = "#1a1b26"
+bg2 = "#1f2335"
+bg3 = "#292e42"
+border = "#3b4261"
+accent = "#7aa2f7"
+accent2 = "#bb9af7"
+fg = "#c0caf5"
+dim = "#565f89"
+bright = "#7dcfff"
+
+[hypr]
+border_active = ["#7aa2f7", "#bb9af7", "#f7768e"]
+border_angle = 45
+border_inactive = "#292e42cc"
+shadow = "#0c0c12dd"
+rounding = 8
+
+[term]
+bg = "#1a1b26"
+fg = "#c0caf5"
+cursor = "#c0caf5"
+selection = "#7aa2f7"
+url = "#7dcfff"
+color0 = "#15161e"
+color1 = "#f7768e"
+color2 = "#9ece6a"
+color3 = "#e0af68"
+color4 = "#7aa2f7"
+color5 = "#bb9af7"
+color6 = "#7dcfff"
+color7 = "#a9b1d6"
+color8 = "#414868"
+color9 = "#f7768e"
+color10 = "#9ece6a"
+color11 = "#e0af68"
+color12 = "#7aa2f7"
+color13 = "#bb9af7"
+color14 = "#7dcfff"
+color15 = "#c0caf5"
+
+[fastfetch]
+logo1 = "#7aa2f7"
+logo2 = "#bb9af7"
+separator = " → "
+rule = "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+symbol = "diamond"

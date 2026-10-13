@@ -1,0 +1,52 @@
+# Mary: neon chartreuse gas giant glowing against black space, lone station in orbit
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#030503"
+bg1 = "#070b07"
+bg2 = "#0c130a"
+bg3 = "#16240f"
+border = "#27620f"
+accent = "#b4e60a"
+accent2 = "#57a20a"
+fg = "#e8f5d0"
+dim = "#5a6e4a"
+bright = "#e2ff5a"
+
+[hypr]
+border_active = ["#caf608", "#57a20a", "#0c130a"]
+border_angle = 60
+border_inactive = "#16240fcc"
+shadow = "#000000ee"
+rounding = 8
+
+[term]
+bg = "#060906"
+fg = "#e8f5d0"
+cursor = "#caf608"
+selection = "#338e08"
+url = "#a2d907"
+color0 = "#121c0e"
+color1 = "#d9573a"
+color2 = "#57a20a"
+color3 = "#c8c40a"
+color4 = "#4f8a6e"
+color5 = "#8f7a4a"
+color6 = "#3fae6a"
+color7 = "#c8d8b0"
+color8 = "#2f4a22"
+color9 = "#f07a5a"
+color10 = "#a2d907"
+color11 = "#eaf030"
+color12 = "#72b892"
+color13 = "#b8a06a"
+color14 = "#62d890"
+color15 = "#f2fae0"
+
+[fastfetch]
+logo1 = "#57a20a"
+logo2 = "#caf608"
+separator = " ⟩ "
+rule = "∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙"
+symbol = "circle"

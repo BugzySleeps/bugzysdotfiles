@@ -1,0 +1,52 @@
+# Hoppe: red-sun deep space over rust Martian ridges, teal planet glow
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#070101"
+bg1 = "#0e0403"
+bg2 = "#170806"
+bg3 = "#2a0e09"
+border = "#57110a"
+accent = "#e8351a"
+accent2 = "#f59b6a"
+fg = "#fce8dc"
+dim = "#7a5a56"
+bright = "#fdceaa"
+
+[hypr]
+border_active = ["#e8351a", "#9d180a", "#3f6b5c"]
+border_angle = 120
+border_inactive = "#2a0e09cc"
+shadow = "#000000ee"
+rounding = 6
+
+[term]
+bg = "#0b0201"
+fg = "#fce8dc"
+cursor = "#e8351a"
+selection = "#9d180a"
+url = "#6fa894"
+color0 = "#1f0907"
+color1 = "#d81e0c"
+color2 = "#5c8a72"
+color3 = "#d29a40"
+color4 = "#5a6f8a"
+color5 = "#a8566a"
+color6 = "#5f9c8e"
+color7 = "#eeb093"
+color8 = "#6a504e"
+color9 = "#ff4a2e"
+color10 = "#7fb096"
+color11 = "#f5b86a"
+color12 = "#8197b4"
+color13 = "#cf7f92"
+color14 = "#85c0b1"
+color15 = "#fce8dc"
+
+[fastfetch]
+logo1 = "#9d180a"
+logo2 = "#f59b6a"
+separator = " » "
+rule = "·─·─·─·─·─·─·─·─·─·─·─·─·─"
+symbol = "background"
