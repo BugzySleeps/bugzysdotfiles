@@ -18,7 +18,7 @@
         "group/controls"
     ],
     "custom/logo": {
-        "format": "",
+        "format": "",
         "tooltip": false,
         "on-click": "wofi --show drun"
     },

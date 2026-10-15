@@ -87,6 +87,7 @@ def load(name):
         theme = tomllib.load(f)
     theme["name"] = name
     theme["dir"] = str(THEMES / name)
+    theme.setdefault("term", {}).setdefault("opacity", 0.4)   # kitty background_opacity
     wp = theme.get("wallpaper", "")
     if wp:
         wp = Path(os.path.expanduser(wp))
@@ -146,11 +147,13 @@ def set_wallpaper(theme):
 def apply(name):
     theme = load(name)
 
-    # 1. render every template into ~/.config
-    for src in TEMPLATES.rglob("*"):
-        if src.is_dir():
-            continue
-        dest = CONFIG / src.relative_to(TEMPLATES)
+    # 1. render every template into ~/.config (themes/<name>/templates/ overrides a file)
+    srcs = {}
+    for root in (TEMPLATES, THEMES / name / "templates"):
+        if root.is_dir():
+            srcs.update((p.relative_to(root), p) for p in root.rglob("*") if p.is_file())
+    for rel, src in srcs.items():
+        dest = CONFIG / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render(src.read_text(), theme, src))
 

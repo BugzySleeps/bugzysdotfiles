@@ -3,6 +3,7 @@ config/hypr/rice.lua
 config/hypr/hyprpaper.conf
 config/waybar/colors.css
 config/waybar/config.jsonc
+config/waybar/style.css
 config/kitty/rice.conf
 config/alacritty/rice.toml
 config/wofi/style.css

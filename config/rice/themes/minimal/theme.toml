@@ -1,0 +1,53 @@
+# Minimal: parchment windows, thin sepia frames, faded floral tapestry
+wallpaper = "wallpaper.jpg"
+wofi_font = '"Liberation Mono", "MesloLGS Nerd Font", monospace'
+
+[colors]
+bg0 = "#f7eed3"
+bg1 = "#f0e4c2"
+bg2 = "#e6d6a8"
+bg3 = "#dac78f"
+border = "#c2a65a"
+accent = "#4a3a22"
+accent2 = "#6f7a3a"
+fg = "#3b2f1e"
+dim = "#9a8a62"
+bright = "#1e170d"
+
+[hypr]
+border_active = ["#4a3a22", "#4a3a22"]
+border_angle = 0
+border_inactive = "#b59b4ccc"
+shadow = "#3b2f1e40"
+rounding = 0
+
+[term]
+bg = "#f7eed3"
+fg = "#3b2f1e"
+opacity = 1.0
+cursor = "#4a3a22"
+selection = "#6b5634"
+url = "#4f6a8a"
+color0 = "#ece0bc"
+color1 = "#93392a"
+color2 = "#5d6e2a"
+color3 = "#94701a"
+color4 = "#3f6080"
+color5 = "#844a5c"
+color6 = "#3a6e62"
+color7 = "#665638"
+color8 = "#a8915a"
+color9 = "#ad4b38"
+color10 = "#738536"
+color11 = "#ab8424"
+color12 = "#5379a0"
+color13 = "#9c5c70"
+color14 = "#4a8576"
+color15 = "#3b2f1e"
+
+[fastfetch]
+logo1 = "#6f7a3a"
+logo2 = "#93392a"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "square"
