@@ -1,0 +1,60 @@
+# Genesis: Rei under a blazing blue sky (live video wallpaper). Minimal like minimalistic:
+# tiny bar (music · workspaces · clock), no borders, no blur, solid black terminals
+# 1600x900@30 re-encode (genesis-lite.mp4) + vaapi-copy decode: ~20% of a core vs ~55% for the 1080p60 original
+# vidwall pauses the video while a window is fullscreen
+wallpaper_cmd = "~/.config/rice/vidwall ~/Videos/wallpapers-video/genesis-lite.mp4 'no-audio loop hwdec=vaapi-copy profile=fast'"
+wofi_font = '"MesloLGS Nerd Font"'
+mouse = "#4a9be9"
+
+[colors]
+bg0 = "#040d26"
+bg1 = "#071538"
+bg2 = "#0d2150"
+bg3 = "#173172"
+border = "#1f4fae"
+accent = "#5db0f2"
+accent2 = "#e0434a"
+fg = "#e4eefa"
+dim = "#6f86b3"
+bright = "#f0f5f8"
+
+[hypr]
+border_size = 0
+blur = false
+border_active = ["#5db0f2", "#5db0f2"]
+border_angle = 0
+border_inactive = "#0d215000"
+shadow = "#02081800"
+rounding = 0
+
+[term]
+bg = "#000000"
+opacity = 1.0
+fg = "#e4eefa"
+cursor = "#7cb9f0"
+selection = "#1f4fae"
+url = "#7cb9f0"
+color0 = "#0d2150"
+color1 = "#e0434a"
+color2 = "#5fc9a8"
+color3 = "#f2c66d"
+color4 = "#4a9be9"
+color5 = "#a98ae6"
+color6 = "#5db0f2"
+color7 = "#cae2f7"
+color8 = "#3a5590"
+color9 = "#f06a70"
+color10 = "#82dcc0"
+color11 = "#f7d891"
+color12 = "#7cb9f0"
+color13 = "#c4aaf0"
+color14 = "#a4c7ec"
+color15 = "#f0f5f8"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#5db0f2"
+logo2 = "#e0434a"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

@@ -9,9 +9,18 @@
     "modules-center": [
         "clock#time",
         "hyprland/workspaces",
-        "clock#date"
+        "clock#date",
+        "custom/record"
     ],
     "modules-right": [],
+    "custom/record": {
+        "exec": "~/.config/waybar/scripts/record.sh status",
+        "return-type": "json",
+        "format": "{}",
+        "on-click": "~/.config/waybar/scripts/record.sh toggle",
+        "on-click-right": "~/.config/waybar/scripts/record.sh region",
+        "on-click-middle": "~/.config/waybar/scripts/record.sh folder"
+    },
     "clock#time": {
         "format": "{:%H:%M:%S}",
         "interval": 1,

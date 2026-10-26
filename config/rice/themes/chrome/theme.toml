@@ -1,0 +1,52 @@
+# Chrome: a glowing icy-white silhouette on pure black, periwinkle shadows
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#000000"
+bg1 = "#06070e"
+bg2 = "#0e1020"
+bg3 = "#1c1f33"
+border = "#2c2f45"
+accent = "#e6ecff"
+accent2 = "#8a94bb"
+fg = "#d5ddf4"
+dim = "#5a6080"
+bright = "#ffffff"
+
+[hypr]
+border_active = ["#ffffff", "#b4bcdd", "#6c7397"]
+border_angle = 135
+border_inactive = "#141626cc"
+shadow = "#b4bcdd22"
+rounding = 6
+
+[term]
+bg = "#030409"
+fg = "#d5ddf4"
+cursor = "#e6ecff"
+selection = "#2c2f45"
+url = "#b4bcdd"
+color0 = "#121424"
+color1 = "#d48aa8"
+color2 = "#8fc2b0"
+color3 = "#dcc9a0"
+color4 = "#8a9ae0"
+color5 = "#b49ae6"
+color6 = "#8ac4dc"
+color7 = "#c4cbe4"
+color8 = "#4a5070"
+color9 = "#e6a6c0"
+color10 = "#aad8c8"
+color11 = "#ecdcb8"
+color12 = "#a8b6f0"
+color13 = "#cbb6f2"
+color14 = "#a8dcf0"
+color15 = "#f3f6fe"
+
+[fastfetch]
+logo1 = "#8a94bb"
+logo2 = "#f3f6fe"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

@@ -93,6 +93,23 @@ tooltip label { color: @pale; }
     letter-spacing: 1px;
 }
 
+#custom-record {
+    color: @pale;
+    background: alpha(@forest, 0.6);
+    border-radius: 6px;
+    margin: 4px 0 4px 6px;
+    padding: 0 11px;
+}
+#custom-record:hover { background: alpha(@moss, 0.6); }
+#custom-record.recording {
+    color: #ffffff;
+    background: alpha(#d83a4e, 0.85);
+    animation: rec-pulse 1.2s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+    50% { background: alpha(#d83a4e, 0.45); }
+}
+
 /* ── entrance: modules cascade in after the bar slides down (SUPER+Tab) ── */
 @keyframes rise-in {
     from { opacity: 0; margin-top: -10px; margin-bottom: 10px; }

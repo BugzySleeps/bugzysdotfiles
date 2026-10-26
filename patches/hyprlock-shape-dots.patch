@@ -1,0 +1,87 @@
+diff --git a/src/renderer/widgets/PasswordInputField.cpp b/src/renderer/widgets/PasswordInputField.cpp
+index bd25f9c..1571069 100644
+--- a/src/renderer/widgets/PasswordInputField.cpp
++++ b/src/renderer/widgets/PasswordInputField.cpp
+@@ -88,7 +88,27 @@ void CPasswordInputField::configure(const std::unordered_map<std::string, std::a
+ 
+     pos = posFromHVAlign(viewport, size->goal(), configPos, halign, valign);
+ 
+-    if (!dots.textFormat.empty()) {
++    if (dots.textFormat.starts_with("img:")) {
++        // image dots: comma-separated paths, ~ expands to $HOME
++        const std::string LIST = dots.textFormat.substr(4);
++        const char*       HOME = getenv("HOME");
++        size_t            start = 0;
++        while (start <= LIST.size()) {
++            size_t      end  = LIST.find(',', start);
++            std::string path = LIST.substr(start, end == std::string::npos ? std::string::npos : end - start);
++            path.erase(0, path.find_first_not_of(" \t"));
++            path.erase(path.find_last_not_of(" \t") + 1);
++            if (path.starts_with("~/") && HOME)
++                path = std::string{HOME} + path.substr(1);
++            if (!path.empty())
++                dots.shapeResourceIDs.push_back(g_asyncResourceManager->requestImage(path, 0, nullptr));
++            if (end == std::string::npos)
++                break;
++            start = end + 1;
++        }
++        dots.shapeAssets.resize(dots.shapeResourceIDs.size());
++        dots.shapeSeed = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count() ^ (uint64_t)(uintptr_t)this;
++    } else if (!dots.textFormat.empty()) {
+         Hyprgraphics::CTextResource::STextResourceData request;
+         request.text        = dots.textFormat;
+         request.font        = fontFamily;
+@@ -239,7 +259,9 @@ bool CPasswordInputField::draw(const SRenderData& data) {
+         Vector2D  passSize{RECTPASSSIZE, RECTPASSSIZE};
+         int       passSpacing = std::floor(passSize.x * dots.spacing);
+ 
+-        if (!dots.textFormat.empty()) {
++        const bool SHAPEDOTS = !dots.shapeResourceIDs.empty();
++
++        if (!dots.textFormat.empty() && !SHAPEDOTS) {
+             if (!dots.textAsset)
+                 dots.textAsset = g_asyncResourceManager->getAssetByID(dots.textResourceID);
+ 
+@@ -285,7 +307,26 @@ bool CPasswordInputField::draw(const SRenderData& data) {
+ 
+             Vector2D dotPosition = inputFieldBox.pos() + Vector2D{xstart + (i * (passSize.x + passSpacing)), (inputFieldBox.h / 2.0) - (passSize.y / 2.0)};
+             CBox     box{dotPosition, passSize};
+-            if (!dots.textFormat.empty()) {
++            if (SHAPEDOTS) {
++                // random-looking but stable while typing: walk the positions from the
++                // start, stepping to a different shape each time (no two neighbours match)
++                const auto MIX = [](uint64_t x) {
++                    x += 0x9E3779B97F4A7C15ull;
++                    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ull;
++                    x = (x ^ (x >> 27)) * 0x94D049BB133111EBull;
++                    return x ^ (x >> 31);
++                };
++                const size_t COUNT = dots.shapeResourceIDs.size();
++                size_t       IDX   = MIX(dots.shapeSeed) % COUNT;
++                for (int k = 1; k <= i && COUNT > 1; ++k)
++                    IDX = (IDX + 1 + MIX(dots.shapeSeed ^ ((uint64_t)k * 0x9E3779B97F4A7C15ull)) % (COUNT - 1)) % COUNT;
++                if (!dots.shapeAssets[IDX])
++                    dots.shapeAssets[IDX] = g_asyncResourceManager->getAssetByID(dots.shapeResourceIDs[IDX]);
++                if (dots.shapeAssets[IDX])
++                    g_pRenderer->renderTexture(box, *dots.shapeAssets[IDX], fontCol.a, 0);
++                else
++                    forceReload = true;
++            } else if (!dots.textFormat.empty()) {
+                 if (!dots.textAsset) {
+                     forceReload = true;
+                     fontCol.a   = DOTALPHA;
+diff --git a/src/renderer/widgets/PasswordInputField.hpp b/src/renderer/widgets/PasswordInputField.hpp
+index 62e8ed9..765ec46 100644
+--- a/src/renderer/widgets/PasswordInputField.hpp
++++ b/src/renderer/widgets/PasswordInputField.hpp
+@@ -70,6 +70,10 @@ class CPasswordInputField : public IWidget {
+         size_t            textResourceID = 0;
+         std::string       textFormat     = "";
+         ASP<CTexture>     textAsset      = nullptr;
++        // dots_text_format = img:<png>,<png>,...  each dot shows one image, picked by position
++        std::vector<size_t>        shapeResourceIDs;
++        std::vector<ASP<CTexture>> shapeAssets;
++        uint64_t                   shapeSeed = 0; // new shape order every time the screen locks
+     } dots;
+ 
+     struct {

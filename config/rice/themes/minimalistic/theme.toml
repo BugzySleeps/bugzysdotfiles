@@ -1,0 +1,56 @@
+# Minimalistic: two manga panels on flat navy. A tiny workspaces-only bar, no borders, solid terminals.
+wallpaper = "wallpaper.jpg"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#18253d"
+bg1 = "#1c2d4b"
+bg2 = "#203659"
+bg3 = "#2c4470"
+border = "#3a5285"
+accent = "#ede1d6"
+accent2 = "#8ea2d8"
+fg = "#ede1d6"
+dim = "#777885"
+bright = "#f6ece2"
+
+[hypr]
+border_size = 0
+blur = false
+border_active = ["#ede1d6", "#ede1d6"]
+border_angle = 0
+border_inactive = "#20365900"
+shadow = "#0c142400"
+rounding = 0
+
+[term]
+bg = "#000000"
+fg = "#ede1d6"
+opacity = 1.0
+cursor = "#ede1d6"
+selection = "#3a5285"
+url = "#b8c6ec"
+color0 = "#18253d"
+color1 = "#c4485a"
+color2 = "#9cbf8e"
+color3 = "#e3c48e"
+color4 = "#8ea2d8"
+color5 = "#b89ad0"
+color6 = "#8ec4cc"
+color7 = "#c3bab9"
+color8 = "#4a5f8a"
+color9 = "#d86a7a"
+color10 = "#b4d4a8"
+color11 = "#ecd4a8"
+color12 = "#aebcea"
+color13 = "#ccb4e0"
+color14 = "#aed8de"
+color15 = "#f6ece2"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#8ea2d8"
+logo2 = "#ede1d6"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

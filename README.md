@@ -5,16 +5,36 @@ waybar, kitty, alacritty, wofi, mako and fastfetch, and swaps the wallpaper.
 
 ## Install
 
+One line, on **Arch, Debian/Ubuntu (or anything based on them) or Gentoo**:
+
 ```sh
-git clone https://github.com/<you>/dotfiles ~/dotfiles
-cd ~/dotfiles
-./install.sh --packages      # or just ./install.sh if you install deps yourself
+curl -fsSL https://raw.githubusercontent.com/BugzySleeps/bugzysdotfiles/main/install.sh | bash
 ```
 
-`install.sh` symlinks everything in `config/` into `~/.config/`, links `scripts/` to
-`~/scripts` and `bin/*` plus `rice` into `~/.local/bin/`, then applies the `forest` rice
-(`RICE=nord ./install.sh` to pick another). Anything already in the way is moved to
-`~/.dotfiles-backup/<timestamp>/`, nothing is deleted.
+or from a clone: `git clone https://github.com/BugzySleeps/bugzysdotfiles ~/dotfiles && ~/dotfiles/install.sh`.
+
+The installer goes through these steps and asks before anything that needs sudo:
+
+1. **Packages.**
+   - **Arch:** official repos; mpvpaper and wl-screenrec come from the AUR when paru or yay is installed.
+   - **Debian stable:** turns on backports, which is where its Hyprland 0.55+ is.
+   - **Gentoo:** turns on the guru and hyproverlay overlays, accepts the testing packages that need
+     it, and builds hyprlock with `patches/hyprlock-shape-dots.patch`.
+2. **Font.** MesloLGS Nerd Font goes into `~/.local/share/fonts`, unless you already have it.
+3. **Links.**
+   - `config/*` goes into `~/.config/`, and `scripts/` to `~/scripts`.
+   - `bin/*` and `rice` go into `~/.local/bin/`.
+   - Anything in the way is moved to `~/.dotfiles-backup/<timestamp>/`; nothing is deleted.
+4. **A rice.** It keeps the one you're on, or starts with `forest`; pick another with `--rice nord`.
+5. **[hyprland-pets](https://github.com/BugzySleeps/hyprland-pets)**, the pet in the pull-down tab.
+6. **Extras.** Each one is asked separately:
+   - start Hyprland when you log in on tty1
+   - fastfetch in new kitty windows
+   - tty1 autologin, so hyprlock is your login screen (systemd only, off unless you say yes or
+     pass `--autologin`)
+
+Run it again any time: it skips what's already done. Options go after `bash -s --` (or after
+`./install.sh`): `--yes`, `--no-packages`, `--no-pet`, `--autologin`, `--rice NAME`.
 
 Because the configs are symlinks, edits you make in `~/.config/...` land in this repo.
 
@@ -33,10 +53,14 @@ Because the configs are symlinks, edits you make in `~/.config/...` land in this
 
 Screenshots go to `~/Pictures/Screenshots/` and the clipboard.
 
+The record button on the waybar records the screen: left-click for the monitor you're on,
+right-click to pick an area, middle-click for the folder. Recordings go to `~/Videos/Recordings/`.
+
 ## Rices
 
-`catppuccin`, `dprk`, `drchaz`, `forest`, `gruvbox`, `hoppe`, `mary`, `mcveigher`,
-`nord`, `nostalgia`, `tokyonight`, `weed`
+`catppuccin`, `chrome`, `dprk`, `drchaz`, `falling`, `forest`, `genesis`, `gentoo`, `grass`,
+`gruvbox`, `hoppe`, `larry`, `mary`, `mcveigher`, `minimal`, `minimalistic`, `nord`, `nostalgia`,
+`tokyonight`, `weed`
 
 ```sh
 rice              # pick with wofi
@@ -84,19 +108,30 @@ wallpaper program; hyprpaper is stopped while it runs.
 
 ## Dependencies
 
-- **Hyprland 0.55+** (this config uses the Lua config format), hyprpaper, hyprpolkitagent
-- waybar, kitty, alacritty, wofi, mako, fastfetch, cava
-- Python 3.11+ and python-evdev (infinite desktop scripts)
-- grim, slurp, wl-clipboard (screenshots), libnotify, playerctl, brightnessctl,
-  wireplumber, NetworkManager, dolphin
+The installer handles these. If you're installing them yourself:
+
+- **Hyprland 0.55+** (this config uses the Lua config format), hyprpaper, hyprlock, hyprpolkitagent,
+  xdg-desktop-portal-hyprland
+- waybar, kitty, alacritty, wofi, mako, fastfetch, cava, fish
+- Python 3.11+, python-evdev (infinite desktop scripts), Pillow (lock screen art)
+- grim, slurp, wl-clipboard (screenshots), libnotify, playerctl, brightnessctl, wireplumber,
+  libpulse (`pactl`), jq, NetworkManager, dolphin, gnome-keyring
+- mpv + mpvpaper (the `genesis` live wallpaper), wl-screenrec (the waybar record button),
+  cmus (now-playing), libratbag + piper (mouse LED follows the rice)
 - MesloLGS Nerd Font
 - Optional: `linux-wallpaperengine` + Wallpaper Engine on Steam for the `weed` rice
+- Optional: hyprlock built with `patches/hyprlock-shape-dots.patch` for random-shape password
+  dots; without it the lock screen uses plain dots
 
 ## Machine-specific bits
 
+- The `genesis` rice plays `~/Videos/wallpapers-video/genesis-lite.mp4`, which isn't in the
+  repo (too big). Put a video there, or change `wallpaper_cmd` in its `theme.toml`.
 - The `weed` rice runs Steam Workshop wallpaper `2104261237` on monitor `eDP-1`. You need
   Wallpaper Engine on Steam with that item downloaded, and you may need to change
   `--screen-root` in `config/rice/themes/weed/theme.toml` to your monitor
   (`hyprctl monitors`).
 - `config/hypr/hyprland.lua` uses `monitor = preferred, auto`. Add rules there for a
   specific setup.
+- `system/getty-tty1-autologin.conf` is the autologin drop-in; the installer fills in your
+  username.

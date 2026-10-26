@@ -1,0 +1,52 @@
+# Falling: an engraved Icarus tumbling through slate storm clouds
+wallpaper = "wallpaper.png"
+wofi_font = '"Liberation Serif", "DejaVu Serif", serif'
+
+[colors]
+bg0 = "#05090f"
+bg1 = "#0c121a"
+bg2 = "#151c25"
+bg3 = "#232b35"
+border = "#3b424a"
+accent = "#c9d1db"
+accent2 = "#7d8a9c"
+fg = "#d4d9df"
+dim = "#5a626c"
+bright = "#f2f4f7"
+
+[hypr]
+border_active = ["#e6eaef", "#7d8a9c", "#262d34"]
+border_angle = 120
+border_inactive = "#151d25cc"
+shadow = "#02050add"
+rounding = 4
+
+[term]
+bg = "#0a1018"
+fg = "#d4d9df"
+cursor = "#c9d1db"
+selection = "#3b424a"
+url = "#9fb0c6"
+color0 = "#1b222a"
+color1 = "#b3707a"
+color2 = "#8aa38e"
+color3 = "#c4b089"
+color4 = "#7f98b8"
+color5 = "#a08cb0"
+color6 = "#86a9ad"
+color7 = "#b9c0c8"
+color8 = "#4a525c"
+color9 = "#cc8c95"
+color10 = "#a5bda8"
+color11 = "#d9c8a3"
+color12 = "#9bb2cf"
+color13 = "#b9a6c8"
+color14 = "#a2c2c6"
+color15 = "#eef1f4"
+
+[fastfetch]
+logo1 = "#7d8a9c"
+logo2 = "#e6eaef"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

@@ -1,0 +1,52 @@
+# Larry the Cow: indigo night sky, yellow stars, silver Gentoo UFO beam
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#07001a"
+bg1 = "#0d0226"
+bg2 = "#160a35"
+bg3 = "#241849"
+border = "#3a2f64"
+accent = "#f2d541"
+accent2 = "#a9a7bc"
+fg = "#dcdae8"
+dim = "#6a6488"
+bright = "#ffffff"
+
+[hypr]
+border_active = ["#f2d541", "#a9a7bc", "#3a2f64"]
+border_angle = 90
+border_inactive = "#1a1038cc"
+shadow = "#02000add"
+rounding = 6
+
+[term]
+bg = "#0b0022"
+fg = "#dcdae8"
+cursor = "#f2d541"
+selection = "#4a3f78"
+url = "#b8b0f0"
+color0 = "#1a1238"
+color1 = "#d9596a"
+color2 = "#8fc77a"
+color3 = "#f2d541"
+color4 = "#7a8ce0"
+color5 = "#b58ae0"
+color6 = "#7ac7c4"
+color7 = "#c8c6d6"
+color8 = "#4a4370"
+color9 = "#ec7686"
+color10 = "#a8dc94"
+color11 = "#f8e47a"
+color12 = "#99a8f0"
+color13 = "#cba6f0"
+color14 = "#96dcd8"
+color15 = "#f4f3fa"
+
+[fastfetch]
+logo1 = "#a9a7bc"
+logo2 = "#f2d541"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"

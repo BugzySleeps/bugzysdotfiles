@@ -79,6 +79,35 @@ def current():
         return None
 
 
+def luminance(c):
+    r, g, b = (int(_hex(c)[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def lock_clock(theme):
+    """A theme colour dark enough to read on hyprlock's white Larry: the first
+    dark one of accent / accent2 / border / fg, else the darkest of the palette."""
+    c = theme.get("colors", {})
+    picks = [c[k] for k in ("accent", "accent2", "border", "fg") if k in c]
+    dark = [p for p in picks if luminance(p) < 0.32]
+    return dark[0] if dark else min(c.values(), key=luminance)
+
+
+SHAPE_DOTS = ", ".join(f"~/.config/hypr/dots/{n}.png" for n in
+                       ("diamond", "triangle", "square", "arch", "pill", "circle", "cookie", "clover"))
+
+
+def shape_dots():
+    """Password dots for hyprlock: random shapes with patches/hyprlock-shape-dots.patch applied,
+    else hyprlock's plain dots (an unpatched hyprlock would print the image paths as text).
+    The patch adds the "img:" prefix; stock hyprlock has no such string."""
+    exe = shutil.which("hyprlock")
+    try:
+        return "img:" + SHAPE_DOTS if exe and b"img:" in Path(exe).read_bytes() else ""
+    except OSError:
+        return ""
+
+
 def load(name):
     path = THEMES / name / "theme.toml"
     if not path.is_file():
@@ -88,6 +117,14 @@ def load(name):
     theme["name"] = name
     theme["dir"] = str(THEMES / name)
     theme.setdefault("term", {}).setdefault("opacity", 0.4)   # kitty background_opacity
+    theme["lock_clock"] = lock_clock(theme)
+    theme["lock_dots"] = shape_dots()
+    theme.setdefault("hypr", {}).setdefault("border_size", 3)
+    # window blur on/off; stored as a Lua literal so the template can drop it straight in
+    theme["hypr"]["blur"] = "true" if theme["hypr"].get("blur", True) else "false"
+    theme.setdefault("waybar", True)                          # false: no bar at all for this theme
+    theme.setdefault("fastfetch", {}).setdefault("logo", "")   # fastfetch logo name; "" = the distro's own
+    theme.setdefault("mouse", theme.get("colors", {}).get("accent", "#ffffff"))  # mouse LED (mouse-color)
     wp = theme.get("wallpaper", "")
     if wp:
         wp = Path(os.path.expanduser(wp))
@@ -124,11 +161,12 @@ def set_wallpaper(theme):
         cmd = load(n).get("wallpaper_cmd")
         if cmd:
             prog = re.escape(os.path.basename(shlex.split(cmd)[0]))
-            sh("pkill", "-f", rf"^(\S*/)?{prog}( |$)")
+            # also matches scripts, whose command line starts with their interpreter
+            sh("pkill", "-f", rf"^(\S*/)?(python3?|bash|sh) \S*/{prog}( |$)|^(\S*/)?{prog}( |$)")
 
     if theme.get("wallpaper_cmd"):
         sh("pkill", "-x", "hyprpaper")
-        spawn(*shlex.split(os.path.expanduser(theme["wallpaper_cmd"])))
+        spawn(*map(os.path.expanduser, shlex.split(theme["wallpaper_cmd"])))
         return
 
     if not theme.get("wallpaper"):
@@ -157,16 +195,33 @@ def apply(name):
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render(src.read_text(), theme, src))
 
-    # 2. wallpaper
+    # 2. hyprlock art (squiggly box, password-dot shapes) in this theme's colours
+    lockenv = {**os.environ, "LOCK_LINE": theme["colors"]["accent"], "LOCK_FILL": theme["colors"]["bg1"],
+               "LOCK_DOT": theme["colors"]["fg"]}
+    for script in ("lockart.py", "lockdots.py"):
+        if (CONFIG / "hypr" / script).is_file():
+            subprocess.Popen(["python3", script], cwd=CONFIG / "hypr", env=lockenv, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
+
+    # mouse LEDs via ratbag/Piper (in the background: ratbagctl takes a moment)
+    spawn(str(RICE / "mouse-color"), theme["mouse"])
+
+    # 3. wallpaper
     set_wallpaper(theme)
 
     CURRENT.write_text(name + "\n")
 
-    # 3. live reloads
+    # 4. live reloads
     sh("hyprctl", "reload")
-    if running("^waybar"):                       # keep it hidden if it was hidden
+    disabled = CONFIG / "waybar" / "disabled"    # toggle.sh won't open the bar while this exists
+    if not theme["waybar"]:
+        disabled.touch()
         sh("pkill", "-x", "waybar")
-        spawn("waybar")
+    else:
+        disabled.unlink(missing_ok=True)
+        if running("^waybar"):                   # keep it hidden if it was hidden
+            sh("pkill", "-x", "waybar")
+            spawn("waybar")
     sh("pkill", "-USR1", "-x", "kitty")          # kitty re-reads its config on SIGUSR1
     if running("^mako"):
         sh("makoctl", "reload")
@@ -179,12 +234,24 @@ def apply(name):
     print(f"rice: switched to {name}")
 
 
+def screen_height():
+    """Logical height of the focused monitor (900 if hyprctl can't tell us)."""
+    try:
+        out = subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True).stdout
+        m = next((m for m in json.loads(out) if m.get("focused")), None)
+        return int(m["height"] / m.get("scale", 1)) if m else 900
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        return 900
+
+
 def pick():
     cur = current()
     names = themes()
     menu = "\n".join(f"{n}  (current)" if n == cur else n for n in names)
+    # fit every theme if there's room, otherwise cap at 60% of the screen; wofi scrolls the rest
+    height = min(60 + 42 * len(names), int(screen_height() * 0.6))
     r = subprocess.run(["wofi", "--dmenu", "--prompt", "rice", "--width", "320",
-                        "--height", str(60 + 42 * len(names)), "--cache-file", "/dev/null"],
+                        "--height", str(height), "--cache-file", "/dev/null"],
                        input=menu, capture_output=True, text=True)
     choice = r.stdout.strip().split()[0] if r.stdout.strip() else ""
     if choice:

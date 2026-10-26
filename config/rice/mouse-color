@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# mouse-color RRGGBB: set every LED on every ratbag (Piper) mouse to one colour.
+# `rice` runs it on each theme switch with the theme's `mouse` colour (default: its accent).
+# Saving the LED rewrites the mouse's profile, which drops it back to the default DPI,
+# so DPI is pinned too: the preset matching $DPI becomes both default and active.
+DPI=2400
+color=${1#\#}
+[[ $color =~ ^[0-9a-fA-F]{6}$ ]] || { echo "usage: mouse-color RRGGBB" >&2; exit 1; }
+command -v ratbagctl >/dev/null || exit 0
+
+ratbagctl list 2>/dev/null | while IFS=: read -r dev _; do
+    leds=$(ratbagctl "$dev" info 2>/dev/null | awk '/Number of Leds/ {print $4}')
+    for ((i = 0; i < ${leds:-0}; i++)); do
+        ratbagctl "$dev" led "$i" set mode on
+        ratbagctl "$dev" led "$i" set color "$color"
+    done
+    res=$(ratbagctl "$dev" info 2>/dev/null | awk -v d="${DPI}dpi" '$2 == d {sub(":", "", $1); print $1; exit}')
+    if [[ -n $res ]]; then
+        ratbagctl "$dev" resolution default set "$res"
+        ratbagctl "$dev" resolution active set "$res"
+    fi
+done

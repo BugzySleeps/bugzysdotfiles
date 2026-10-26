@@ -39,7 +39,6 @@ local terminal    = "kitty"
 local fileManager = "dolphin"
 local menu = "wofi --show drun"
 
-
 -------------------
 ---- AUTOSTART ----
 -------------------
@@ -50,10 +49,13 @@ local menu = "wofi --show drun"
 -- Or execute your favorite apps at launch like this:
 --
 hl.on("hyprland.start", function () 
+hl.exec_cmd("hyprlock")  -- lock first: tty1 autologins, so hyprlock is the greeter
 hl.exec_cmd("systemctl --user start hyprpolkitagent")
 -- waybar starts hidden; SUPER+Tab shows it
 hl.exec_cmd("mako")
 hl.exec_cmd("~/.config/rice/rice wallpaper")  -- hyprpaper or live wallpaper, per rice
+hl.exec_cmd("~/.local/bin/hyprland-pets")  -- the pet in its pull-down tab (github.com/BugzySleeps/hyprland-pets)
+hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
 end)
 
 
@@ -270,13 +272,21 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 local closeWindowBind = hl.bind(mainMod .. " + C", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + V", function() -- float/unfloat; a newly floated window is 1030x620 and centred
+    hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+    local win = hl.get_active_window()
+    if win and win.floating then
+        hl.dispatch(hl.dsp.window.resize({ x = 1030, y = 620 }))
+        hl.dispatch(hl.dsp.window.center())
+    end
+end)
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("~/.config/rice/rice"))      -- rice picker
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/rice/rice next")) -- next rice
 hl.bind(mainMod .. " + Tab",       hl.dsp.exec_cmd("~/.config/waybar/scripts/toggle.sh")) -- show/hide waybar
+hl.bind(mainMod .. " + M",         hl.dsp.exec_cmd("~/.local/bin/swiftify"))   -- swiftify
 
 -- Screenshots (saved to ~/Pictures/Screenshots + copied to clipboard)
 hl.bind("Print",         hl.dsp.exec_cmd("~/.local/bin/screenshot region"))
@@ -304,9 +314,6 @@ end
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
--- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
@@ -383,6 +390,14 @@ hl.window_rule({
     match  = { class = "^nmtui$" },
     float  = true,
     size   = "720 520",
+    center = true,
+})
+
+-- Float Larry's settings window (right-click his tab, or hyprland-pets --settings)
+hl.window_rule({
+    name   = "float-larry-settings",
+    match  = { class = "^larry$" },
+    float  = true,
     center = true,
 })
 

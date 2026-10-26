@@ -28,6 +28,10 @@ tooltip {
 tooltip label { color: @pale; }
 
 #clock { color: @pale; padding: 0 12px; }
+#custom-record { color: @pale; padding: 0 10px; }
+#custom-record:hover { background: @moss; }
+#custom-record.recording { color: #ff5a6e; animation: rec-pulse 1.2s steps(1) infinite; }
+@keyframes rec-pulse { 50% { color: @pale; } }
 
 #workspaces { margin: 0 24px; }
 #workspaces button {

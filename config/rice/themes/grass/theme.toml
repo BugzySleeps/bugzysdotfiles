@@ -1,0 +1,52 @@
+# Grass: chrome Gentoo logo lying in a sunny lawn
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+
+[colors]
+bg0 = "#0b1406"
+bg1 = "#111d0a"
+bg2 = "#1a2a10"
+bg3 = "#263c17"
+border = "#375712"
+accent = "#b4b2f0"
+accent2 = "#739f2a"
+fg = "#dfe8d4"
+dim = "#6a7d5a"
+bright = "#f7f6fe"
+
+[hypr]
+border_active = ["#f7f6fe", "#b4b2f0", "#739f2a"]
+border_angle = 135
+border_inactive = "#1f2f13cc"
+shadow = "#050a03dd"
+rounding = 8
+
+[term]
+bg = "#0f1909"
+fg = "#dfe8d4"
+cursor = "#b4b2f0"
+selection = "#48711e"
+url = "#a6a4ec"
+color0 = "#1c2a12"
+color1 = "#d46a5a"
+color2 = "#7cb02e"
+color3 = "#d9c45a"
+color4 = "#8c8ae0"
+color5 = "#b98ad6"
+color6 = "#6ab8a0"
+color7 = "#c9d4bc"
+color8 = "#48613a"
+color9 = "#e88676"
+color10 = "#9ccc4c"
+color11 = "#ecd97a"
+color12 = "#acaaf0"
+color13 = "#d0a8e8"
+color14 = "#8ad0ba"
+color15 = "#f7f6fe"
+
+[fastfetch]
+logo1 = "#b4b2f0"
+logo2 = "#f7f6fe"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"
