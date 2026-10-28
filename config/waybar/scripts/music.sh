@@ -3,7 +3,7 @@
 
 players=cmus,swiftify
 dir=$(mktemp -d -t waybar-music.XXXXXX)
-trap 'rm -rf "$dir"; kill 0' EXIT TERM
+trap 'trap - EXIT TERM; rm -rf "$dir"; kill 0' EXIT TERM  # (reset first: kill 0 hits us too, and would rerun this forever)
 
 cat > "$dir/cava" <<CONF
 [general]

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Feed cava's raw output into waybar as bar glyphs; prints nothing when silent
 
-trap 'rm -f "$conf"; kill 0' EXIT TERM
+trap 'trap - EXIT TERM; rm -f "$conf"; kill 0' EXIT TERM  # (reset first: kill 0 hits us too, and would rerun this forever)
 
 conf=$(mktemp -t waybar-cava.XXXXXX)
 cat > "$conf" <<EOF
