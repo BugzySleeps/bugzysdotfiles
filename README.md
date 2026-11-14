@@ -25,7 +25,7 @@ The installer goes through these steps and asks before anything that needs sudo:
    - `config/*` goes into `~/.config/`, and `scripts/` to `~/scripts`.
    - `bin/*` and `rice` go into `~/.local/bin/`.
    - Anything in the way is moved to `~/.dotfiles-backup/<timestamp>/`; nothing is deleted.
-4. **A rice.** It keeps the one you're on, or starts with `forest`; pick another with `--rice nord`.
+4. **A rice.** It keeps the one you're on, or starts with `leaf`.
 5. **[hyprland-pets](https://github.com/BugzySleeps/hyprland-pets)**, the pet in the pull-down tab.
 6. **Extras.** Each one is asked separately:
    - start Hyprland when you log in on tty1
@@ -58,9 +58,7 @@ right-click to pick an area, middle-click for the folder. Recordings go to `~/Vi
 
 ## Rices
 
-`catppuccin`, `chrome`, `dprk`, `drchaz`, `falling`, `forest`, `genesis`, `gentoo`, `grass`,
-`gruvbox`, `hoppe`, `larry`, `mary`, `mcveigher`, `minimal`, `minimalistic`, `nord`, `nostalgia`,
-`tokyonight`, `weed`
+`leaf`
 
 ```sh
 rice              # pick with wofi

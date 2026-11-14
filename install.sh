@@ -19,7 +19,7 @@
 #   --no-packages    don't install packages
 #   --no-pet         don't install hyprland-pets
 #   --autologin      also set up tty1 autologin + hyprlock greeter (systemd only)
-#   --rice NAME      which rice to apply (default: the one you're on, else forest; also RICE=NAME)
+#   --rice NAME      which rice to apply (default: the one you're on, else leaf; also RICE=NAME)
 set -u
 
 REPO="BugzySleeps/bugzysdotfiles"
@@ -289,7 +289,7 @@ link "$DOT/config/rice/rice" "$HOME/.local/bin/rice"
 # ── 4. rice ──────────────────────────────────────────────────────────────────
 if [[ -z $RICE ]]; then   # keep the rice you're on when re-running
     RICE=$(cat "$DOT/config/rice/current" 2>/dev/null)
-    RICE=${RICE:-forest}
+    RICE=${RICE:-leaf}
 fi
 bold "Applying the $RICE rice"
 if ! python3 -c 'import tomllib' 2>/dev/null; then

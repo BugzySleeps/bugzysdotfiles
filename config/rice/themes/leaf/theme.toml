@@ -1,0 +1,58 @@
+# Leaf: warm monochrome macro leaf. Built to be light: no blur, no shadows, opaque windows,
+# a tiny workspaces + clock bar (no cava), thin flat borders, no pet.
+wallpaper = "wallpaper.png"
+wofi_font = '"MesloLGS Nerd Font"'
+pet = false
+
+[colors]
+bg0 = "#121212"
+bg1 = "#1a1919"
+bg2 = "#252424"
+bg3 = "#302f2f"
+border = "#403e3c"
+accent = "#d8d2c4"
+accent2 = "#8a857c"
+fg = "#cfc9bc"
+dim = "#6e6a64"
+bright = "#ece6d8"
+
+[hypr]
+border_size = 1
+blur = false
+border_active = ["#8a857c", "#8a857c"]
+border_angle = 0
+border_inactive = "#2a292800"
+shadow = "#00000000"
+rounding = 6
+
+[term]
+bg = "#121212"
+fg = "#cfc9bc"
+opacity = 1.0
+cursor = "#d8d2c4"
+selection = "#403e3c"
+url = "#a8b0a0"
+color0 = "#1c1c1c"
+color1 = "#b07a6e"
+color2 = "#8f9a7c"
+color3 = "#c2ad86"
+color4 = "#7f8c96"
+color5 = "#a08896"
+color6 = "#86a09a"
+color7 = "#cfc9bc"
+color8 = "#55534f"
+color9 = "#c48e82"
+color10 = "#a3ae90"
+color11 = "#d4c09a"
+color12 = "#93a0aa"
+color13 = "#b49caa"
+color14 = "#9ab4ae"
+color15 = "#ece6d8"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#8a857c"
+logo2 = "#d8d2c4"
+separator = "  "
+rule = "──────────────────────────"
+symbol = "circle"
