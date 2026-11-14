@@ -79,21 +79,21 @@ esac
 
 ARCH_PKGS=(hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland waybar kitty alacritty wofi
     mako fastfetch cava python python-evdev python-pillow grim slurp wl-clipboard jq libnotify playerctl
-    brightnessctl wireplumber libpulse networkmanager dolphin mpv mpvpaper wl-screenrec cmus libratbag piper
+    brightnessctl wireplumber libpulse networkmanager dolphin wl-screenrec cmus libratbag piper
     gnome-keyring fish ttf-meslo-nerd git curl)
 DEBIAN_PKGS=(hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland waybar kitty alacritty wofi
     mako-notifier fastfetch cava python3 python3-evdev python3-pil grim slurp wl-clipboard jq libnotify-bin
-    playerctl brightnessctl wireplumber pulseaudio-utils network-manager dolphin mpv mpvpaper wl-screenrec cmus
+    playerctl brightnessctl wireplumber pulseaudio-utils network-manager dolphin wl-screenrec cmus
     ratbagd piper gnome-keyring fish git curl xz-utils fontconfig)
 GENTOO_PKGS=(gui-wm/hyprland gui-apps/hyprpaper gui-apps/hyprlock sys-auth/hyprpolkitagent
     gui-libs/xdg-desktop-portal-hyprland gui-apps/waybar x11-terms/kitty x11-terms/alacritty gui-apps/wofi
     gui-apps/mako app-misc/fastfetch media-sound/cava dev-python/evdev dev-python/pillow gui-apps/grim
     gui-apps/slurp gui-apps/wl-clipboard app-misc/jq x11-libs/libnotify media-sound/playerctl
     app-misc/brightnessctl media-video/wireplumber media-libs/libpulse net-misc/networkmanager kde-apps/dolphin
-    media-video/mpv gui-apps/mpvpaper media-video/wl-screenrec media-sound/cmus dev-libs/libratbag app-misc/piper
+    media-video/wl-screenrec media-sound/cmus dev-libs/libratbag app-misc/piper
     gnome-base/gnome-keyring app-shells/fish dev-vcs/git net-misc/curl app-arch/xz-utils media-libs/fontconfig)
-# Gentoo: newer than stable, from overlays (hyproverlay: current Hyprland, guru: mpvpaper/wl-screenrec)
-GENTOO_KEYWORDS=("*/*::hyproverlay" gui-apps/mpvpaper media-video/wl-screenrec app-misc/brightnessctl
+# Gentoo: newer than stable, from overlays (hyproverlay: current Hyprland, guru: wl-screenrec)
+GENTOO_KEYWORDS=("*/*::hyproverlay" media-video/wl-screenrec app-misc/brightnessctl
     app-misc/piper dev-libs/libratbag)
 
 available() {  # print the packages this distro's repos actually have

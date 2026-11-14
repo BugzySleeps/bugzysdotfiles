@@ -16,7 +16,7 @@ or from a clone: `git clone https://github.com/BugzySleeps/bugzysdotfiles ~/dotf
 The installer goes through these steps and asks before anything that needs sudo:
 
 1. **Packages.**
-   - **Arch:** official repos; mpvpaper and wl-screenrec come from the AUR when paru or yay is installed.
+   - **Arch:** official repos; wl-screenrec comes from the AUR when paru or yay is installed.
    - **Debian stable:** turns on backports, which is where its Hyprland 0.55+ is.
    - **Gentoo:** turns on the guru and hyproverlay overlays, accepts the testing packages that need
      it, and builds hyprlock with `patches/hyprlock-shape-dots.patch`.
