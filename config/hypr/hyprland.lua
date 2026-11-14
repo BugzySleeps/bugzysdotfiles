@@ -54,7 +54,7 @@ hl.exec_cmd("systemctl --user start hyprpolkitagent")
 -- waybar starts hidden; SUPER+Tab shows it
 hl.exec_cmd("mako")
 hl.exec_cmd("~/.config/rice/rice wallpaper")  -- hyprpaper or live wallpaper, per rice
-hl.exec_cmd("~/.local/bin/hyprland-pets")  -- the pet in its pull-down tab (github.com/BugzySleeps/hyprland-pets)
+hl.exec_cmd("~/.config/rice/rice pet")  -- the pet in its pull-down tab, unless the rice sets pet = false (github.com/BugzySleeps/hyprland-pets)
 hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
 end)
 
@@ -159,11 +159,13 @@ dofile(os.getenv("HOME") .. "/.config/hypr/rice.lua")
 
 hl.animation({ leaf = "global",        enabled = true,  speed = 10,   bezier = "default" })
 hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "easeOutQuint" })
-hl.animation({ leaf = "windows",       enabled = true,  speed = 4.79, spring = "easy" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.1,  spring = "easy",         style = "popin 87%" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 1.49, bezier = "linear",       style = "popin 87%" })
-hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 1.73, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 1.46, bezier = "almostLinear" })
+-- windows: short ease-out curves instead of springs, so opening several at once (and the
+-- re-tiling it causes) settles fast instead of stacking up long springy moves
+hl.animation({ leaf = "windows",       enabled = true,  speed = 1.5,  bezier = "easeOutQuint" })
+hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 1.2,  bezier = "easeOutQuint", style = "popin 95%" })
+hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 0.8,  bezier = "linear",       style = "popin 95%" })
+hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 0.8,  bezier = "quick" })
+hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 0.8,  bezier = "almostLinear" })
 hl.animation({ leaf = "fade",          enabled = true,  speed = 3.03, bezier = "quick" })
 hl.animation({ leaf = "layers",        enabled = true,  speed = 3.81, bezier = "easeOutQuint" })
 hl.animation({ leaf = "layersIn",      enabled = true,  speed = 5,    bezier = "emphasizedDecel", style = "fade" })
@@ -287,6 +289,9 @@ hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("~/.config/rice/rice"))      
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/rice/rice next")) -- next rice
 hl.bind(mainMod .. " + Tab",       hl.dsp.exec_cmd("~/.config/waybar/scripts/toggle.sh")) -- show/hide waybar
 hl.bind(mainMod .. " + M",         hl.dsp.exec_cmd("~/.local/bin/swiftify"))   -- swiftify
+hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("~/.config/waybar/scripts/cmus.sh toggle")) -- cmus popup (starts cmus if needed)
+hl.bind(mainMod .. " + ALT + M",   hl.dsp.exec_cmd("~/.config/waybar/scripts/cmus.sh detach")) -- cmus: popup <-> window
+hl.bind(mainMod .. " + period",    hl.dsp.exec_cmd("~/.local/bin/hypr-emoji"))  -- emoji picker
 
 -- Screenshots (saved to ~/Pictures/Screenshots + copied to clipboard)
 hl.bind("Print",         hl.dsp.exec_cmd("~/.local/bin/screenshot region"))

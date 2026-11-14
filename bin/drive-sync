@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Watches a folder and uploads any images in it to Google Drive via rclone.
+# Uses `rclone copy` (not sync), so deleting a file locally never deletes it on Drive.
+#
+#   drive-sync          watch forever (what the systemd user service runs)
+#   drive-sync --once   upload whatever's there now and exit
+
+set -euo pipefail
+
+SRC="${DRIVE_SYNC_SRC:-$HOME/Photoshop/watermarked}"
+DEST="${DRIVE_SYNC_DEST:-gdrive:Photoshop Watermarked}"
+DEBOUNCE=3   # seconds of quiet before uploading, so half-written saves don't get sent
+
+filters=(--ignore-case
+    --include '*.{png,jpg,jpeg,webp,gif,tif,tiff,psd,heic,avif}'
+    --exclude '*')
+
+upload() {
+    local out
+    if out=$(rclone copy "$SRC" "$DEST" "${filters[@]}" --stats-one-line -v 2>&1); then
+        local n
+        n=$(grep -c ': Copied' <<<"$out" || true)
+        if (( n > 0 )); then
+            echo "uploaded $n file(s)"
+            notify-send -a drive-sync -i folder-cloud "Drive sync" "Uploaded $n image(s)" 2>/dev/null || true
+        fi
+    else
+        echo "$out" >&2
+        notify-send -a drive-sync -u critical "Drive sync failed" "Check: journalctl --user -u drive-sync" 2>/dev/null || true
+    fi
+}
+
+mkdir -p "$SRC"
+upload    # catch anything added while we weren't running
+
+[[ ${1:-} == --once ]] && exit 0
+
+echo "watching $SRC -> $DEST"
+inotifywait -m -q -e close_write,moved_to --format '%f' "$SRC" | while read -r _; do
+    # swallow the burst of events from a single save / multi-file export
+    while read -r -t "$DEBOUNCE" _; do :; done
+    upload
+done

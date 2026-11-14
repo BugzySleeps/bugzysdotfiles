@@ -7,7 +7,8 @@
     "modules-left": [
         "custom/logo",
         "hyprland/workspaces",
-        "custom/cava"
+        "custom/cava",
+        "custom/cmus"
     ],
     "modules-center": [
         "clock"
@@ -133,6 +134,16 @@
     "margin-top": 8,
     "margin-left": 16,
     "margin-right": 16,
+    "custom/cmus": {
+        "exec": "~/.config/waybar/scripts/cmus.sh status",
+        "return-type": "json",
+        "interval": 2,
+        "signal": 8,
+        "format": "{}",
+        "on-click": "~/.config/waybar/scripts/cmus.sh toggle",
+        "on-click-right": "~/.config/waybar/scripts/cmus.sh detach",
+        "on-click-middle": "cmus-remote -u"
+    },
     "custom/cava": {
         "exec": "~/.config/waybar/scripts/cava.sh",
         "format": "{}",

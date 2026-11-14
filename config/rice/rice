@@ -7,6 +7,7 @@
   rice list          list themes (* = current)
   rice reload        re-render the current theme (after editing a template)
   rice wallpaper     start the current theme's wallpaper (for autostart)
+  rice pet           start the pet unless the current theme sets pet = false (for autostart)
 
 Themes live in ~/.config/rice/themes/<name>/theme.toml.
 Templates live in ~/.config/rice/templates/, mirroring paths under ~/.config.
@@ -123,6 +124,7 @@ def load(name):
     # window blur on/off; stored as a Lua literal so the template can drop it straight in
     theme["hypr"]["blur"] = "true" if theme["hypr"].get("blur", True) else "false"
     theme.setdefault("waybar", True)                          # false: no bar at all for this theme
+    theme.setdefault("pet", True)                             # false: no hyprland-pets for this theme
     theme.setdefault("fastfetch", {}).setdefault("logo", "")   # fastfetch logo name; "" = the distro's own
     theme.setdefault("mouse", theme.get("colors", {}).get("accent", "#ffffff"))  # mouse LED (mouse-color)
     wp = theme.get("wallpaper", "")
@@ -152,6 +154,18 @@ def monitors():
 
 def running(pattern):
     return subprocess.run(["pgrep", "-f", pattern], stdout=subprocess.DEVNULL).returncode == 0
+
+
+PET = HOME / ".local" / "bin" / "hyprland-pets"
+PET_PROC = "hyprland-pets/src/larry.py"
+
+
+def set_pet(theme):
+    """Start or stop hyprland-pets per theme (the launcher does nothing if one is already running)."""
+    if not theme["pet"]:
+        sh("pkill", "-f", PET_PROC)
+    elif PET.exists():
+        spawn(str(PET))
 
 
 def set_wallpaper(theme):
@@ -206,8 +220,9 @@ def apply(name):
     # mouse LEDs via ratbag/Piper (in the background: ratbagctl takes a moment)
     spawn(str(RICE / "mouse-color"), theme["mouse"])
 
-    # 3. wallpaper
+    # 3. wallpaper and pet
     set_wallpaper(theme)
+    set_pet(theme)
 
     CURRENT.write_text(name + "\n")
 
@@ -285,6 +300,9 @@ def main():
             set_wallpaper(load(name))
         else:
             spawn("hyprpaper")
+    elif arg == "pet":                          # used by Hyprland autostart
+        name = current()
+        set_pet(load(name) if name else {"pet": True})
     elif arg == "reload":
         apply(current() or sys.exit("rice: no current theme"))
     else:
