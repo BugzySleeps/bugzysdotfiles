@@ -114,10 +114,9 @@ The installer handles these. If you're installing them yourself:
 - Python 3.11+, python-evdev (infinite desktop scripts), Pillow (lock screen art)
 - grim, slurp, wl-clipboard (screenshots), libnotify, playerctl, brightnessctl, wireplumber,
   libpulse (`pactl`), jq, NetworkManager, dolphin, gnome-keyring
-- mpv + mpvpaper (the `genesis` live wallpaper), wl-screenrec (the waybar record button),
+- wl-screenrec (the waybar record button),
   cmus (now-playing), libratbag + piper (mouse LED follows the rice)
 - MesloLGS Nerd Font
-- Optional: `linux-wallpaperengine` + Wallpaper Engine on Steam for the `weed` rice
 - Optional: hyprlock built with `patches/hyprlock-shape-dots.patch` for random-shape password
   dots; without it the lock screen uses plain dots
 
