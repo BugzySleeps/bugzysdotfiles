@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Screen recorder behind the waybar button (wl-screenrec: hardware H.264 through VAAPI, so it's
+# Screen recorder behind the bar button (waybar, or the Quickshell bar) (wl-screenrec: hardware H.264 through VAAPI, so it's
 # light on the CPU). Recordings land in ~/Videos/Recordings.
 #   record.sh status   waybar exec: prints the button as JSON, with a live timer while recording
 #   record.sh toggle   left click: record the monitor you're on, or stop
@@ -14,8 +14,14 @@ pidf="$run.pid" filef="$run.file" startf="$run.start"
 notify() { notify-send -a "Screen recorder" -i media-record "$@"; }
 recording() { [[ -s $pidf ]] && kill -0 "$(<"$pidf")" 2>/dev/null; }
 poke() {  # wake every bar's status loop so the button changes right away
-    for f in "$run".fifo.*; do [[ -p $f ]] && echo >"$f" & done
-    wait
+    local pids=() f
+    for f in "$run".fifo.*; do
+        [[ -p $f ]] || continue
+        # a loop that's gone left its fifo behind: writing to it would block forever
+        if ! kill -0 "${f##*.}" 2>/dev/null; then rm -f "$f"; continue; fi
+        timeout 1 sh -c 'echo >"$1"' sh "$f" & pids+=($!)
+    done
+    (( ${#pids[@]} )) && wait "${pids[@]}"   # only these: a bare `wait` would also wait for the recorder itself
 }
 
 start() {
@@ -32,7 +38,8 @@ start() {
         args+=(-o "$(hyprctl monitors -j | jq -r '.[] | select(.focused).name')")
     fi
     if (( AUDIO )); then
-        args+=(--audio --audio-device "$(pactl get-default-sink).monitor")
+        # the output the sound is actually going to (not just the default one), see ~/.config/rice/active-sink
+        args+=(--audio --audio-device "$(~/.config/rice/active-sink 2>/dev/null || pactl get-default-sink).monitor")
     fi
     mkdir -p "$dir"
     local file="$dir/recording-$(date +%F_%H-%M-%S).mp4"

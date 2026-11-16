@@ -1,0 +1,60 @@
+# Ekitai (液体, "liquid"): one colour on black (the name is from the first wallpaper). The wallpaper, borders, bar and terminal text
+# are all the same neon green. Square corners, a row of boxed bar modules, see-through terminals.
+# No blur, no glow, so it stays light.
+wallpaper = "wallpaper.png"   # made from ~/Pictures/wallpapers/Greenie.png: dark green with its original shading and glow, 55% size, bottom right
+wofi_font = '"MesloLGS Nerd Font", "Noto Sans CJK JP"'
+pet = false
+
+[colors]
+bg0 = "#000000"
+bg1 = "#030803"
+bg2 = "#071209"
+bg3 = "#0d1c10"
+border = "#5fe878"
+accent = "#5fe878"
+accent2 = "#2f9e45"
+fg = "#5fe878"
+dim = "#1f5c2b"
+bright = "#b8f7c4"
+
+[hypr]
+border_size = 2
+blur = false
+border_active = ["#5fe878"]
+border_angle = 0
+border_inactive = "#173d20"
+shadow = "#00000000"
+rounding = 0
+
+# terminal colours are shades of the one green too; red becomes lime so errors still stand out
+[term]
+bg = "#000000"
+fg = "#5fe878"
+opacity = 0.3
+cursor = "#5fe878"
+selection = "#173d20"
+url = "#b8f7c4"
+color0 = "#0d1c10"
+color1 = "#d4ff6a"
+color2 = "#5fe878"
+color3 = "#a8f5b6"
+color4 = "#2f9e45"
+color5 = "#4fcf6a"
+color6 = "#7fd99a"
+color7 = "#5fe878"
+color8 = "#1f5c2b"
+color9 = "#e2ff94"
+color10 = "#9cf2ad"
+color11 = "#b8f7c4"
+color12 = "#46b85c"
+color13 = "#6ee488"
+color14 = "#94e3a8"
+color15 = "#b8f7c4"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#5fe878"
+logo2 = "#2f9e45"
+separator = " - "
+rule = "────────────────────────"
+symbol = "block"

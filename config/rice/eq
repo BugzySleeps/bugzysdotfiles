@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""eq — a 10-band equaliser on everything that's playing.
+
+  eq on | off | toggle
+  eq set <10 gains>  dB per band (31 Hz … 16 kHz, ±12), live
+  eq preset <name>   flat, bass, treble, vocal, pop, rock, jazz, classical
+  eq attach <id>     put it on one new stream (the Quickshell shell does this as streams appear)
+  eq status --json   on/off, gains, preset, presets, bands
+  eq muffle          everything playing sounds like it's underwater (the lock screen does this): the
+                     highs glide away over a second
+  eq unmuffle        and back
+
+How: PipeWire's audioconvert (the converter every stream already runs through) can host filter graphs,
+in numbered slots that run in order. The EQ (a preamp and 10 biquads, one per slot) goes into each playing
+stream's converter, and gains change live through the same converter. No extra process, no rerouting: outputs, volume keys and cava stay exactly as they are.
+Settings live in ~/.local/state/rice/eq.json.
+"""
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+PRESETS = {
+    "flat":      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "bass":      [6, 5, 4, 2, 0, 0, 0, 0, 0, 0],
+    "treble":    [0, 0, 0, 0, 0, 1, 2, 4, 5, 6],
+    "vocal":     [-2, -2, -1, 0, 2, 4, 4, 2, 0, -1],
+    "pop":       [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2],
+    "rock":      [5, 4, 2, 0, -1, -1, 1, 3, 4, 5],
+    "jazz":      [3, 2, 1, 2, -1, -1, 0, 1, 2, 3],
+    "classical": [4, 3, 2, 1, -1, -1, 0, 2, 3, 4],
+}
+STATE = Path.home() / ".local/state/rice/eq.json"
+SLOT = "audioconvert.filter-graph."             # + N: one slot per filter (a multi-filter graph doesn't run there)
+
+
+def load():
+    try:
+        s = json.loads(STATE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        s = {}
+    s.setdefault("on", False)
+    s.setdefault("gains", PRESETS["flat"])
+    s.setdefault("preset", "flat")
+    return s
+
+
+def save(s):
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+    STATE.write_text(json.dumps({k: s[k] for k in ("on", "gains", "preset")}) + "\n")
+
+
+def streams():
+    """Ids of every audio stream playing into an output."""
+    try:
+        objs = json.loads(subprocess.run(["pw-dump"], capture_output=True, text=True).stdout)
+    except json.JSONDecodeError:
+        return []
+    return [str(o["id"]) for o in objs if o.get("type") == "PipeWire:Interface:Node"
+            and o.get("info", {}).get("props", {}).get("media.class") == "Stream/Output/Audio"]
+
+
+def filters():
+    """(name, biquad) in order: pre turns everything down by the biggest boost, so nothing clips; then the bands."""
+    out = [("pre", "bq_highshelf")]
+    for i in range(1, len(FREQS) + 1):
+        out.append((f"b{i}", "bq_lowshelf" if i == 1 else "bq_highshelf" if i == len(FREQS) else "bq_peaking"))
+    return out
+
+
+def controls(gains, full=True):
+    """The graph's control values. A graph's own starting values don't take, so the first time sets them all."""
+    pre = -max(0, max(gains))
+    out = []
+    if full:
+        out += ['"pre:Freq" 1.0', '"pre:Q" 1.0']
+        for i, f in enumerate(FREQS, 1):
+            out += [f'"b{i}:Freq" {f}.0', f'"b{i}:Q" 1.0']
+    out.append(f'"pre:Gain" {pre:.1f}')
+    out += [f'"b{i}:Gain" {g:.1f}' for i, g in enumerate(gains, 1)]
+    return out
+
+
+def set_params(node, params):
+    subprocess.run(["pw-cli", "set-param", node, "Props", "{ params = [ " + " ".join(params) + " ] }"],
+                   capture_output=True)
+
+
+def attach(node, gains):
+    set_params(node, [f'"{SLOT}{n}" "{{ nodes = [ {{ type = builtin name = {name} label = {label} }} ] }}"'
+                      for n, (name, label) in enumerate(filters())])
+    for wait in (0.3, 0.7):                      # the converter loads it in the background: set it, then again in case
+        time.sleep(wait)
+        set_params(node, controls(gains))
+
+
+def detach(node):
+    # "off" = flat, which passes the sound through untouched. Never "audioconvert.filter-graph.disable":
+    # PipeWire latches that, and the stream can't load a filter again until it's recreated.
+    set_params(node, controls([0] * len(FREQS)))
+
+
+MUFFLE_SLOT = f"{SLOT}{len(FREQS) + 1}"         # after the preamp and the bands: its own slot
+MUFFLE_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "ekitai-muffled"
+
+
+def muffle(down):
+    """Glide a low-pass across everything playing: down to a deep muffle, or back up and out of the way."""
+    nodes = streams()
+    if not nodes:
+        return
+    if down:
+        for n in nodes:
+            set_params(n, [f'"{MUFFLE_SLOT}" "{{ nodes = [ {{ type = builtin name = muffle label = bq_lowpass }} ] }}"'])
+        time.sleep(0.25)                             # the converters load it
+        MUFFLE_FILE.touch()
+    steps, lo, hi = 14, 420.0, 18000.0
+    for i in range(steps + 1):
+        t = i / steps
+        t = t if down else 1 - t
+        freq = hi * (lo / hi) ** (t * t * (3 - 2 * t))   # exponential, eased: the ear hears it evenly
+        for n in nodes:
+            set_params(n, [f'"muffle:Freq" {freq:.0f}', '"muffle:Q" 0.8', '"muffle:Gain" 0.0'])
+        time.sleep(0.07)
+    if not down:
+        # wide open (20 kHz passes everything you can hear); never "disable", which PipeWire latches
+        for n in nodes:
+            set_params(n, ['"muffle:Freq" 20000', '"muffle:Q" 0.7'])
+        MUFFLE_FILE.unlink(missing_ok=True)
+
+
+def main():
+    a = sys.argv[1:] or ["status"]
+    s = load()
+    cmd = a[0]
+    if cmd in ("on", "off", "toggle"):
+        s["on"] = cmd == "on" or (cmd == "toggle" and not s["on"])
+        save(s)
+        for n in streams():
+            attach(n, s["gains"]) if s["on"] else detach(n)
+    elif cmd == "muffle":
+        muffle(True)
+    elif cmd == "unmuffle":
+        muffle(False)
+    elif cmd == "attach" and len(a) == 2:
+        if s["on"]:
+            attach(a[1], s["gains"])
+    elif cmd in ("set", "preset"):
+        if cmd == "set" and len(a) == 1 + len(FREQS):
+            s["gains"] = [max(-12.0, min(12.0, round(float(x), 1))) for x in a[1:]]
+            s["preset"] = next((n for n, g in PRESETS.items() if g == s["gains"]), "custom")
+        elif cmd == "preset" and len(a) == 2 and a[1] in PRESETS:
+            s["gains"], s["preset"] = PRESETS[a[1]], a[1]
+        else:
+            sys.exit(__doc__.strip())
+        save(s)
+        if s["on"]:
+            for n in streams():
+                set_params(n, controls(s["gains"]))
+    elif cmd == "status":
+        st = {**s, "freqs": FREQS, "presets": list(PRESETS)}
+        print(json.dumps(st) if "--json" in a else st)
+    else:
+        sys.exit(__doc__.strip())
+
+
+if __name__ == "__main__":
+    main()

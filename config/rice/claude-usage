@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""claude-usage — Claude Code's token usage, as JSON, for the shell's Claude widget.
+
+Reads the session logs in ~/.claude/projects/**/*.jsonl (every reply records its token counts).
+Only new lines are read each time: where it got to in each file is kept in ~/.cache/rice/claude-usage.json,
+along with the last 48 hours of replies (older ones don't matter here).
+
+  { "window": { "tokens", "start", "end", "active" },   the current 5-hour usage window (plan limits roll on these)
+    "today": { "tokens", "input", "output", "cacheRead", "cacheWrite", "sessions", "replies" },
+    "hours": [12 numbers],                              tokens per hour, the last 12, oldest first
+    "model": "…"                                        the most used model today }
+"""
+import json
+import os
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+ROOT = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "projects"
+CACHE = Path.home() / ".cache/rice/claude-usage.json"
+KEEP = 48 * 3600
+WINDOW = 5 * 3600
+
+
+def parse_ts(s):
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
+    except (ValueError, AttributeError):
+        return None
+
+
+def read_new(path, state, now):
+    """Records from the part of `path` not read yet: [ts, input, output, cacheWrite, cacheRead, model, request id, session]."""
+    size = path.stat().st_size
+    off = state.get("offset", 0)
+    if size < off:                               # rewritten: start again
+        off, state["records"] = 0, []
+    if size == off:
+        return
+    with open(path, "rb") as f:
+        f.seek(off)
+        chunk = f.read()
+    end = chunk.rfind(b"\n") + 1                 # only whole lines; a half-written one waits for next time
+    state["offset"] = off + end
+    for line in chunk[:end].splitlines():
+        if b'"usage"' not in line:
+            continue
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        m = d.get("message") or {}
+        u = m.get("usage")
+        ts = parse_ts(d.get("timestamp"))
+        if not u or ts is None or now - ts > KEEP:
+            continue
+        state["records"].append([ts, u.get("input_tokens", 0), u.get("output_tokens", 0),
+                                 u.get("cache_creation_input_tokens", 0), u.get("cache_read_input_tokens", 0),
+                                 m.get("model", ""), d.get("requestId") or m.get("id") or "", d.get("sessionId", path.stem)])
+
+
+def main():
+    now = time.time()
+    try:
+        cache = json.loads(CACHE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache = {}
+    files = {}
+    if ROOT.is_dir():
+        for p in ROOT.rglob("*.jsonl"):
+            try:
+                if now - p.stat().st_mtime > KEEP:
+                    continue
+            except OSError:
+                continue
+            st = cache.get(str(p), {"offset": 0, "records": []})
+            try:
+                read_new(p, st, now)
+            except OSError:
+                continue
+            st["records"] = [r for r in st["records"] if now - r[0] <= KEEP]
+            files[str(p)] = st
+    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    CACHE.write_text(json.dumps(files))
+
+    # one entry per reply: a reply's usage can be logged more than once (streaming, resumed sessions)
+    replies = {}
+    for st in files.values():
+        for r in st["records"]:
+            key = r[6] or f"{r[0]}:{r[7]}"
+            replies[key] = r
+    rs = sorted(replies.values(), key=lambda r: r[0])
+    total = lambda r: r[1] + r[2] + r[3] + r[4]
+
+    # the 5-hour window: it starts at the hour of the first reply after a 5-hour gap, and lasts 5 hours
+    start = None
+    for r in rs:
+        if start is None or r[0] >= start + WINDOW:
+            start = r[0] - r[0] % 3600
+    active = start is not None and now < start + WINDOW
+    in_window = [r for r in rs if active and r[0] >= start]
+
+    midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    today = [r for r in rs if r[0] >= midnight]
+    models = {}
+    for r in today:
+        models[r[5]] = models.get(r[5], 0) + total(r)
+    hour0 = now - now % 3600 - 11 * 3600
+    hours = [0] * 12
+    for r in rs:
+        i = int((r[0] - hour0) // 3600)
+        if 0 <= i < 12:
+            hours[i] += total(r)
+
+    print(json.dumps({
+        "window": {"tokens": sum(total(r) for r in in_window), "start": start if active else None,
+                   "end": start + WINDOW if active else None, "active": active},
+        "today": {"tokens": sum(total(r) for r in today), "input": sum(r[1] for r in today),
+                  "output": sum(r[2] for r in today), "cacheWrite": sum(r[3] for r in today),
+                  "cacheRead": sum(r[4] for r in today), "sessions": len({r[7] for r in today}),
+                  "replies": len(today)},
+        "hours": hours,
+        "model": max(models, key=models.get) if models else "",
+        "now": now,
+    }))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# qs-ipc <target> <function> [args...] [-- fallback command...]
+# Calls the current rice's Quickshell shell over IPC (see ~/.config/quickshell/<config>/services/Ui.qml).
+# If the rice has no Quickshell shell, or it isn't running, runs the fallback instead (exit 1 if none).
+#   qs-ipc launcher toggle -- wofi --show drun
+rice=$(cat ~/.config/rice/current 2>/dev/null)
+name=$(sed -n 's/^quickshell *= *"\([^"]*\)".*/\1/p' ~/.config/rice/themes/"$rice"/theme.toml 2>/dev/null)
+
+call=()
+while [[ $# -gt 0 && $1 != -- ]]; do call+=("$1"); shift; done
+[[ $1 == -- ]] && shift
+
+if [[ -n $name ]] && qs -c "$name" ipc call "${call[@]}" >/dev/null 2>&1; then
+    exit 0
+fi
+[[ $# -gt 0 ]] && exec "$@"
+exit 1

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# pick-colour: pick a colour off the screen, copy its hex and remember it (the launcher's `#` mode lists
+# recent picks). Uses hyprpicker if it's installed, else slurp + grim (a crosshair, then one pixel).
+state=${XDG_STATE_HOME:-$HOME/.local/state}/rice/colours
+sleep 0.2                                          # let the launcher give up the keyboard first
+if command -v hyprpicker >/dev/null; then
+    hex=$(hyprpicker -f hex 2>/dev/null)
+else
+    pt=$(slurp -p 2>/dev/null) || exit 0           # esc: nothing picked
+    hex="#$(grim -g "$pt" -t ppm - | tail -c 3 | od -An -tx1 | tr -d ' \n')"
+fi
+[[ $hex =~ ^#[0-9a-fA-F]{6}$ ]] || exit 0
+hex=${hex,,}
+printf %s "$hex" | wl-copy
+mkdir -p "${state%/*}"
+{ echo "$hex"; grep -vxF "$hex" "$state" 2>/dev/null | head -n 11; } > "$state.tmp" && mv "$state.tmp" "$state"
+notify-send -a colour "$hex" "copied to the clipboard"

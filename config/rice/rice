@@ -5,21 +5,38 @@
   rice <name>        switch to <name>
   rice next|prev     cycle through themes
   rice list          list themes (* = current)
+  rice list --json   every theme's name, description, wallpaper, palette and shell (for the Quickshell picker)
   rice reload        re-render the current theme (after editing a template)
   rice wallpaper     start the current theme's wallpaper (for autostart)
   rice pet           start the pet unless the current theme sets pet = false (for autostart)
+  rice shell         start mako, or the current theme's Quickshell shell (for autostart)
+  rice lock          lock the screen: the theme's Quickshell lock screen, else hyprlock
+  rice lock --boot   the same, at login: the Quickshell lock opens with its intro
+  rice wall <image>  use <image> as the wallpaper and recolour the theme from it (themes with wallpaper_picker)
+  rice wall default  back to the theme's own wallpaper and colours
+  rice accent <image|url>  for now, take the colours from an image (album art): the shell and the
+                     window borders crossfade to it; the wallpaper and the theme stay as they are
+  rice accent off    back to the theme's colours
+  rice walls --json  the wallpapers on offer, each with the palette it would give (for the Quickshell picker)
 
 Themes live in ~/.config/rice/themes/<name>/theme.toml.
+A theme with wallpaper_picker = true lets you pick any image from wallpaper_dir (default ~/Pictures/wallpapers):
+its palette is the theme's own, turned to the image's main hue (greys for a colourless image).
+A theme with quickshell = "<config>" runs ~/.config/quickshell/<config> as its shell (bar,
+notifications, launcher) instead of waybar + mako.
 Templates live in ~/.config/rice/templates/, mirroring paths under ~/.config.
 Placeholders look like {{colors.accent}} with optional filters: {{colors.accent|hex}}.
 """
+import colorsys
 import json
+import math
 import os
 import re
 import shlex
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 
@@ -29,6 +46,9 @@ RICE = CONFIG / "rice"
 THEMES = RICE / "themes"
 TEMPLATES = RICE / "templates"
 CURRENT = RICE / "current"
+WALLSTATE = HOME / ".local/state/rice"       # <theme>.json: the wallpaper picked for a theme, and its tone
+TONECACHE = HOME / ".cache/rice/tones.json"
+PALETTE = WALLSTATE / "palette.json"            # the current theme's colours + wallpaper, read live by the Quickshell shell
 
 
 # ── colour filters ──────────────────────────────────────────────────────────
@@ -109,12 +129,17 @@ def shape_dots():
         return ""
 
 
-def load(name):
+def load(name, picked=True):
+    """picked=False: the theme as written, ignoring a wallpaper picked with `rice wall`."""
     path = THEMES / name / "theme.toml"
     if not path.is_file():
         sys.exit(f"rice: no theme '{name}'. Available: {', '.join(themes())}")
     with open(path, "rb") as f:
         theme = tomllib.load(f)
+    state = wall_state(name) if picked and theme.get("wallpaper_picker") else None
+    if state and Path(state["path"]).is_file():
+        theme["wallpaper"] = state["path"]
+        recolour(theme, state["hue"], state["colour"])
     theme["name"] = name
     theme["dir"] = str(THEMES / name)
     theme.setdefault("term", {}).setdefault("opacity", 0.4)   # kitty background_opacity
@@ -125,6 +150,7 @@ def load(name):
     theme["hypr"]["blur"] = "true" if theme["hypr"].get("blur", True) else "false"
     theme.setdefault("waybar", True)                          # false: no bar at all for this theme
     theme.setdefault("pet", True)                             # false: no hyprland-pets for this theme
+    theme.setdefault("quickshell", "")                        # a Quickshell config to run as this theme's shell
     theme.setdefault("fastfetch", {}).setdefault("logo", "")   # fastfetch logo name; "" = the distro's own
     theme.setdefault("mouse", theme.get("colors", {}).get("accent", "#ffffff"))  # mouse LED (mouse-color)
     wp = theme.get("wallpaper", "")
@@ -132,6 +158,138 @@ def load(name):
         wp = Path(os.path.expanduser(wp))
         theme["wallpaper"] = str(wp if wp.is_absolute() else THEMES / name / wp)
     return theme
+
+
+# ── wallpaper colours ───────────────────────────────────────────────────────
+def wall_state(name):
+    try:
+        return json.loads((WALLSTATE / f"{name}.json").read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def tone(image):
+    """An image's main colour: (hue 0-1, colour 0-1). Colourful pixels vote for their hue, weighted by
+    how saturated and bright they are; colour 0 means it has none to speak of (greys)."""
+    try:
+        cache = json.loads(TONECACHE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache = {}
+    key = f"{image}:{os.path.getmtime(image)}"
+    if key in cache:
+        return tuple(cache[key])
+
+    from PIL import Image
+    im = Image.open(image).convert("RGB")
+    im.thumbnail((96, 96))
+    bins, sats, n = [0.0] * 36, [0.0] * 36, 0
+    for r, g, b in (im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()):
+        h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+        n += 1
+        if s < 0.2 or v < 0.18:
+            continue
+        w = s * s * v
+        bins[int(h * 36) % 36] += w
+        sats[int(h * 36) % 36] += w * s
+    smooth = [bins[i - 1] + 2 * bins[i] + bins[(i + 1) % 36] for i in range(36)]
+    peak = max(range(36), key=smooth.__getitem__)
+    if sum(bins) / max(n, 1) < 0.004:             # hardly any colourful pixels
+        result = (0.0, 0.0)
+    else:
+        x = y = w = ws = 0.0
+        for j in (peak - 1, peak, peak + 1):
+            j %= 36
+            a = (j + 0.5) / 36 * 2 * math.pi
+            x, y, w, ws = x + bins[j] * math.cos(a), y + bins[j] * math.sin(a), w + bins[j], ws + sats[j]
+        result = (round(math.atan2(y, x) / (2 * math.pi) % 1, 4), round(min(1.0, ws / w / 0.45), 3))
+    cache[key] = result
+    TONECACHE.parent.mkdir(parents=True, exist_ok=True)
+    TONECACHE.write_text(json.dumps(cache))
+    return result
+
+
+def recolour(theme, hue, colour):
+    """Turn every colour in the theme to `hue`, keeping how light and how saturated each one is
+    (scaled by `colour`; 0 = greys). Blacks and greys stay as they are. Lightness is matched
+    afterwards, so a blue isn't darker than the green it replaces."""
+    base = colorsys.rgb_to_hsv(*(int(_hex(theme["colors"]["accent"])[i:i + 2], 16) / 255 for i in (0, 2, 4)))[0]
+
+    def turn(c):
+        if not isinstance(c, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?", c):
+            return c
+        rgb = [int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        h, s, v = colorsys.rgb_to_hsv(*rgb)
+        if s < 0.06:
+            return c
+        h, s = (h + hue - base) % 1, s * colour
+        out = colorsys.hsv_to_rgb(h, s, v)
+        want, got = luminance(c), luminance("#%02x%02x%02x" % tuple(round(x * 255) for x in out))
+        if got > 0 and got < want:
+            v = min(1.0, v * math.sqrt(want / got))
+            out = colorsys.hsv_to_rgb(h, s, v)
+        return "#%02x%02x%02x" % tuple(round(x * 255) for x in out) + c[7:]
+
+    def walk(x):
+        if isinstance(x, dict):
+            return {k: walk(v) for k, v in x.items()}
+        if isinstance(x, list):
+            return [walk(v) for v in x]
+        return turn(x)
+
+    for section in ("colors", "hypr", "term", "fastfetch"):
+        if section in theme:
+            theme[section] = walk(theme[section])
+    if "mouse" in theme:
+        theme["mouse"] = turn(theme["mouse"])
+
+
+def wall_dir(theme):
+    return Path(os.path.expanduser(theme.get("wallpaper_dir", "~/Pictures/wallpapers")))
+
+
+def walls(name):
+    """The picker's list: the theme's own wallpaper first, then every image in wallpaper_dir."""
+    raw = load(name, picked=False)
+    state = wall_state(name)
+    picked = state["path"] if state and Path(state["path"]).is_file() else None
+    out = [{"name": "default", "label": f"{name} default", "path": raw.get("wallpaper", ""), "own": True,
+            "current": picked is None, "colors": raw["colors"], "term": palette_term(raw)}]
+    d = wall_dir(raw)
+    images = sorted(p for p in d.iterdir() if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")) if d.is_dir() else []
+    for img in images:
+        hue, colour = tone(img)
+        t = load(name, picked=False)
+        recolour(t, hue, colour)
+        out.append({"name": str(img), "label": img.stem, "path": str(img), "own": False,
+                    "current": str(img) == picked, "hue": round(hue * 360), "mono": colour == 0,
+                    "colors": t["colors"], "term": palette_term(t)})
+    return out
+
+
+def palette_term(t):
+    term = t.get("term", {})
+    return [term[f"color{i}"] for i in range(1, 7) if f"color{i}" in term]
+
+
+def set_wall(arg):
+    name = current() or sys.exit("rice: no current theme")
+    theme = load(name, picked=False)
+    if not theme.get("wallpaper_picker"):
+        sys.exit(f"rice: {name} doesn't take picked wallpapers (wallpaper_picker = true in its theme.toml)")
+    statefile = WALLSTATE / f"{name}.json"
+    if arg == "default":
+        statefile.unlink(missing_ok=True)
+        label = "default"
+    else:
+        img = Path(os.path.expanduser(arg)).resolve()
+        if not img.is_file():
+            sys.exit(f"rice: no image {img}")
+        hue, colour = tone(img)
+        WALLSTATE.mkdir(parents=True, exist_ok=True)
+        statefile.write_text(json.dumps({"path": str(img), "hue": hue, "colour": colour}) + "\n")
+        label = img.stem
+    apply(name, note=False)                      # the picker / the wallpaper itself shows it changed
+    print(f"rice: wallpaper {label}")
 
 
 # ── apply ───────────────────────────────────────────────────────────────────
@@ -168,6 +326,23 @@ def set_pet(theme):
         spawn(str(PET))
 
 
+def set_shell(theme):
+    """Quickshell themes bring their own bar and notification daemon; every other theme gets mako.
+    Only one thing can own org.freedesktop.Notifications, so the other one is stopped first."""
+    want = theme["quickshell"]
+    for n in themes():
+        other = load(n)["quickshell"]
+        if other and other != want:
+            sh("qs", "kill", "-c", other)
+    if want:
+        sh("pkill", "-x", "mako")
+        spawn("qs", "-c", want, "-n")              # -n: does nothing if it's already running
+    elif running("^mako"):
+        sh("makoctl", "reload")
+    elif shutil.which("mako"):
+        spawn("mako")
+
+
 def set_wallpaper(theme):
     """Image wallpapers go through hyprpaper; `wallpaper_cmd` runs a live wallpaper program instead."""
     # stop any live wallpaper started by a theme (matched by program name)
@@ -177,6 +352,10 @@ def set_wallpaper(theme):
             prog = re.escape(os.path.basename(shlex.split(cmd)[0]))
             # also matches scripts, whose command line starts with their interpreter
             sh("pkill", "-f", rf"^(\S*/)?(python3?|bash|sh) \S*/{prog}( |$)|^(\S*/)?{prog}( |$)")
+
+    if theme.get("wallpaper_by_shell"):          # the Quickshell shell draws it (and fades between them)
+        sh("pkill", "-x", "hyprpaper")
+        return
 
     if theme.get("wallpaper_cmd"):
         sh("pkill", "-x", "hyprpaper")
@@ -196,7 +375,61 @@ def set_wallpaper(theme):
         spawn("hyprpaper")
 
 
-def apply(name):
+def accent(arg):
+    """Recolour just the live parts (the Quickshell shell, through palette.json, and Hyprland's borders)
+    from an image, without re-rendering anything: cheap enough to follow the music, track by track."""
+    name = current() or sys.exit("rice: no current theme")
+    theme = load(name)
+    if arg != "off":
+        img = arg
+        if re.match(r"https?://", arg):          # art from the web (spotify, browsers): fetch it first
+            img = str(Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "rice-accent-art")
+            if subprocess.run(["curl", "-sfL", "-m", "8", "-o", img, arg]).returncode != 0:
+                sys.exit("rice: couldn't fetch the art")
+        img = img.removeprefix("file://")
+        if not Path(img).is_file():
+            sys.exit(f"rice: no image {img}")
+        hue, colour = tone(img)
+        if colour > 0:                           # a colourless cover keeps the usual colours
+            recolour(theme, hue, colour)
+    write_palette(theme)
+    h = theme["hypr"]
+    actives = ", ".join(f'"rgba({_hex(c)})"' for c in h["border_active"])
+    sh("hyprctl", "eval", f'hl.config({{ general = {{ col = {{ active_border = {{ colors = {{ {actives} }}, angle = {h.get("border_angle", 0)} }}, '
+                          f'inactive_border = "rgba({_hex(h["border_inactive"])})" }} }} }})')
+
+
+def lock_screen(boot=False):
+    """Lock with the theme's Quickshell lock screen. The flag file makes a shell that's still starting (at
+    login) lock as soon as it's up, and one that crashes lock again when it restarts. If it isn't locked
+    within 8 seconds, hyprlock locks instead, so this never leaves the session open."""
+    name = current()
+    qs = load(name)["quickshell"] if name else ""
+    if qs:
+        flag = WALLSTATE / "locked"
+        flag.parent.mkdir(parents=True, exist_ok=True)
+        flag.write_text("boot\n" if boot else "")    # a shell that's still starting reads this
+        subprocess.run(["qs", "-c", qs, "ipc", "call", "lock", "boot" if boot else "lock"], capture_output=True)
+        for _ in range(40):
+            r = subprocess.run(["qs", "-c", qs, "ipc", "call", "lock", "isLocked"], capture_output=True, text=True)
+            if r.stdout.strip() == "true":
+                return
+            time.sleep(0.2)
+        flag.unlink(missing_ok=True)             # hyprlock has it now; a late shell shouldn't lock as well
+    os.execvp("hyprlock", ["hyprlock"])
+
+
+def write_palette(theme):
+    """The colours and wallpaper as JSON, for shells that recolour live instead of reloading."""
+    PALETTE.parent.mkdir(parents=True, exist_ok=True)
+    data = {k: theme.get(k) for k in ("name", "wallpaper", "colors", "hypr", "term")}
+    tmp = PALETTE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=1) + "\n")
+    tmp.replace(PALETTE)
+
+
+def apply(name, note=None):
+    """note: (title, body) for the notification; False for none."""
     theme = load(name)
 
     # 1. render every template into ~/.config (themes/<name>/templates/ overrides a file)
@@ -226,7 +459,9 @@ def apply(name):
 
     CURRENT.write_text(name + "\n")
 
-    # 4. live reloads
+    # 4. live reloads. The palette goes first: a Quickshell shell starts loading the new wallpaper while
+    #    hyprland and the terminals reload, so the wipe starts closer to when they change
+    write_palette(theme)
     sh("hyprctl", "reload")
     disabled = CONFIG / "waybar" / "disabled"    # toggle.sh won't open the bar while this exists
     if not theme["waybar"]:
@@ -238,14 +473,11 @@ def apply(name):
             sh("pkill", "-x", "waybar")
             spawn("waybar")
     sh("pkill", "-USR1", "-x", "kitty")          # kitty re-reads its config on SIGUSR1
-    if running("^mako"):
-        sh("makoctl", "reload")
-    elif shutil.which("mako"):
-        spawn("mako")
+    set_shell(theme)                             # mako, or the theme's Quickshell
     # alacritty and wofi pick up changes on their own
 
-    if shutil.which("notify-send"):
-        spawn("timeout", "3", "notify-send", "-a", "rice", "Rice switched", name)
+    if note is not False and shutil.which("notify-send"):
+        spawn("timeout", "3", "notify-send", "-a", "rice", *(note or ("Rice switched", name)))
     print(f"rice: switched to {name}")
 
 
@@ -273,6 +505,36 @@ def pick():
         apply(choice)
 
 
+def describe(name):
+    """What the Quickshell rice picker shows on a theme's card."""
+    t = load(name)
+    head = []                                   # the comment block at the top of theme.toml
+    for line in (THEMES / name / "theme.toml").read_text().splitlines():
+        if not line.startswith("#"):
+            break
+        head.append(line.lstrip("# ").rstrip())
+    text = " ".join(head)
+    cut = min((i for i in (text.find(":"), text.find(" — ")) if i > 0), default=-1)
+    title, about = (text[:cut], text[cut:].lstrip(":— ")) if cut > 0 else ("", text)
+    if len(title) > 40:                         # no "Name: description" / "Name — description" form
+        title, about = "", text
+    c, term = t.get("colors", {}), t.get("term", {})
+    return {
+        "name": name,
+        "title": title.strip(),
+        "about": about.strip(),
+        "current": name == current(),
+        "wallpaper": t.get("wallpaper", ""),
+        "live": bool(t.get("wallpaper_cmd")),
+        "shell": "quickshell" if t["quickshell"] else "waybar" if t["waybar"] else "none",
+        "blur": t["hypr"]["blur"] == "true",
+        "rounding": t["hypr"].get("rounding", 0),
+        "opacity": term.get("opacity"),
+        "colors": {k: c[k] for k in ("bg0", "bg1", "bg2", "bg3", "dim", "accent2", "accent", "fg", "bright") if k in c},
+        "term": [term[f"color{i}"] for i in range(1, 7) if f"color{i}" in term],
+    }
+
+
 def cycle(step):
     names = themes()
     cur = current()
@@ -286,6 +548,16 @@ def main():
         pick()
     elif arg in ("-h", "--help", "help"):
         print(__doc__.strip())
+    elif arg == "accent":
+        accent(sys.argv[2] if len(sys.argv) > 2 else sys.exit("usage: rice accent <image|url>|off"))
+    elif arg == "lock":
+        lock_screen(boot="--boot" in sys.argv)
+    elif arg == "wall":
+        set_wall(sys.argv[2] if len(sys.argv) > 2 else sys.exit("usage: rice wall <image>|default"))
+    elif arg == "walls" and "--json" in sys.argv:
+        print(json.dumps(walls(current() or sys.exit("rice: no current theme"))))
+    elif arg == "list" and "--json" in sys.argv:
+        print(json.dumps([describe(n) for n in themes()]))
     elif arg == "list":
         cur = current()
         for n in themes():
@@ -303,6 +575,13 @@ def main():
     elif arg == "pet":                          # used by Hyprland autostart
         name = current()
         set_pet(load(name) if name else {"pet": True})
+    elif arg == "shell":                        # used by Hyprland autostart
+        name = current()
+        if name:
+            write_palette(load(name))
+            set_shell(load(name))
+        elif shutil.which("mako"):
+            spawn("mako")
     elif arg == "reload":
         apply(current() or sys.exit("rice: no current theme"))
     else:

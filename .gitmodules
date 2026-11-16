@@ -1,0 +1,3 @@
+[submodule "config/quickshell/ekitai"]
+	path = config/quickshell/ekitai
+	url = https://github.com/BugzySleeps/liquid.git

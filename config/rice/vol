@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# vol up|down|mute [step%]: change the volume of the output the sound is actually going to
+# (see active-sink), capped at 100%. Used by the volume keys.
+
+sink=$(~/.config/rice/active-sink)
+step=${2:-5}
+
+case $1 in
+    up | down)
+        cur=$(pactl get-sink-volume "$sink" | grep -oE '[0-9]+%' | head -1 | tr -d %)
+        [ "$1" = up ] && new=$((cur + step)) || new=$((cur - step))
+        new=$((new > 100 ? 100 : new < 0 ? 0 : new))
+        pactl set-sink-mute "$sink" 0
+        pactl set-sink-volume "$sink" "$new%"
+        ;;
+    mute) pactl set-sink-mute "$sink" toggle ;;
+    *) echo "usage: vol up|down|mute [step]" >&2; exit 1 ;;
+esac

@@ -37,7 +37,7 @@ hl.monitor({
 -- Set programs that you use
 local terminal    = "kitty"
 local fileManager = "dolphin"
-local menu = "wofi --show drun"
+local menu = "~/.config/rice/qs-ipc launcher toggle -- wofi --show drun"  -- the Quickshell rice's launcher, else wofi
 
 -------------------
 ---- AUTOSTART ----
@@ -49,10 +49,10 @@ local menu = "wofi --show drun"
 -- Or execute your favorite apps at launch like this:
 --
 hl.on("hyprland.start", function () 
-hl.exec_cmd("hyprlock")  -- lock first: tty1 autologins, so hyprlock is the greeter
+hl.exec_cmd("~/.config/rice/rice lock --boot")  -- lock first: tty1 autologins, so the lock is the greeter (the Quickshell lock, else hyprlock)
 hl.exec_cmd("systemctl --user start hyprpolkitagent")
 -- waybar starts hidden; SUPER+Tab shows it
-hl.exec_cmd("mako")
+hl.exec_cmd("~/.config/rice/rice shell")  -- mako, or the rice's Quickshell shell (bar, notifications, launcher)
 hl.exec_cmd("~/.config/rice/rice wallpaper")  -- hyprpaper or live wallpaper, per rice
 hl.exec_cmd("~/.config/rice/rice pet")  -- the pet in its pull-down tab, unless the rice sets pet = false (github.com/BugzySleeps/hyprland-pets)
 hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
@@ -110,7 +110,7 @@ hl.config({
         -- Please see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Tearing/ before you turn this on
         allow_tearing = false,
 
-        layout = "dwindle",
+        layout = "scrolling",   -- windows sit in a row of columns; scroll right for more
     },
 
     decoration = {
@@ -162,7 +162,7 @@ hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "
 -- windows: short ease-out curves instead of springs, so opening several at once (and the
 -- re-tiling it causes) settles fast instead of stacking up long springy moves
 hl.animation({ leaf = "windows",       enabled = true,  speed = 1.5,  bezier = "easeOutQuint" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 1.2,  bezier = "easeOutQuint", style = "popin 95%" })
+hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 3,    bezier = "emphasizedDecel", style = "slide bottom" })  -- new windows rise from the bottom
 hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 0.8,  bezier = "linear",       style = "popin 95%" })
 hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 0.8,  bezier = "quick" })
 hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 0.8,  bezier = "almostLinear" })
@@ -213,6 +213,9 @@ hl.config({
 hl.config({
     scrolling = {
         fullscreen_on_one_column = true,
+        column_width = 0.5,                          -- two windows per screen; the rest are off to the right
+        explicit_column_widths = "0.333, 0.5, 0.667, 1.0",  -- what SUPER + = / - steps through
+        focus_fit_method = 1,                        -- scroll just enough to show the focused window
     },
 })
 
@@ -224,6 +227,7 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = true,
+        allow_session_lock_restore = true,  -- if the lock screen crashes, the session stays locked and a restarted one takes over
     },
 })
 
@@ -285,13 +289,21 @@ hl.bind(mainMod .. " + V", function() -- float/unfloat; a newly floated window i
     end
 end)
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
-hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("~/.config/rice/rice"))      -- rice picker
+hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher next"))  -- window switcher (let go of ALT to switch)
+hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher prev"))
+hl.bind(mainMod .. " + O",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc overview toggle"))  -- every workspace at once; drag windows between them
+hl.bind(mainMod .. " + I",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc settings toggle"))  -- settings
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("~/.config/rice/qs-ipc clipboard toggle"))  -- clipboard history
+hl.bind(mainMod .. " + Escape",    hl.dsp.exec_cmd("~/.config/rice/rice lock"))  -- lock the screen
+hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc wall toggle -- ~/.config/rice/rice")) -- wallpaper picker (Quickshell rice; wofi rice list on the others)
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/rice/rice next")) -- next rice
-hl.bind(mainMod .. " + Tab",       hl.dsp.exec_cmd("~/.config/waybar/scripts/toggle.sh")) -- show/hide waybar
+hl.bind(mainMod .. " + Tab",       hl.dsp.exec_cmd("~/.config/waybar/scripts/toggle.sh")) -- show/hide the bar (waybar or Quickshell)
+hl.bind(mainMod .. " + W",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc widgets edit")) -- edit desktop widgets (Quickshell rice)
+hl.bind(mainMod .. " + N",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc panel toggle control -- makoctl restore")) -- control centre (Quickshell rice), else bring back the last notification
 hl.bind(mainMod .. " + M",         hl.dsp.exec_cmd("~/.local/bin/swiftify"))   -- swiftify
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("~/.config/waybar/scripts/cmus.sh toggle")) -- cmus popup (starts cmus if needed)
 hl.bind(mainMod .. " + ALT + M",   hl.dsp.exec_cmd("~/.config/waybar/scripts/cmus.sh detach")) -- cmus: popup <-> window
-hl.bind(mainMod .. " + period",    hl.dsp.exec_cmd("~/.local/bin/hypr-emoji"))  -- emoji picker
+hl.bind(mainMod .. " + period",    hl.dsp.exec_cmd("~/.config/rice/qs-ipc launcher open : -- ~/.local/bin/hypr-emoji"))  -- emoji picker (the launcher's : mode; wofi on other rices)
 
 -- Screenshots (saved to ~/Pictures/Screenshots + copied to clipboard)
 hl.bind("Print",         hl.dsp.exec_cmd("~/.local/bin/screenshot region"))
@@ -324,10 +336,16 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
+-- Scrolling layout: SUPER + wheel scrolls through the row, SUPER + = / - widens or narrows the focused window
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ direction = "right" }))
+hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ direction = "left" }))
+hl.bind(mainMod .. " + equal",      hl.dsp.layout("colresize +conf"))
+hl.bind(mainMod .. " + minus",      hl.dsp.layout("colresize -conf"))
+
 -- Laptop multimedia keys for volume and LCD brightness
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/rice/vol up"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/rice/vol down"), { locked = true, repeating = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("~/.config/rice/vol mute"),   { locked = true, repeating = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true })
@@ -404,6 +422,22 @@ hl.window_rule({
     match  = { class = "^larry$" },
     float  = true,
     center = true,
+})
+
+-- The Quickshell rice (ekitai-qs) animates its own bar, panels and popups
+hl.layer_rule({
+    name    = "ekitai-shell-no-anim",
+    match   = { namespace = "^ekitai-" },
+    no_anim = true,
+})
+
+-- The Quickshell rice's glass look: frost what's behind the bar, panels, widgets and popups. Only takes
+-- effect while blur is on, which the glass look switches (Look.qml); not the wallpaper layer itself
+hl.layer_rule({
+    name         = "ekitai-glass",
+    match        = { namespace = "^ekitai-(bar|panel|launcher|osd|toasts|desktop|picker)$" },
+    blur         = true,
+    ignore_alpha = 0.3,
 })
 
 -- Blur behind waybar

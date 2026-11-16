@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # screenshot [region|full|window] — save to ~/Pictures/Screenshots and copy to clipboard
+# region: with the Quickshell rice running, the shot opens in its editor first (draw, crop, then save/copy)
 # needs: grim slurp wl-clipboard
 
 mode=${1:-region}
@@ -23,6 +24,15 @@ case $mode in
     full)   geom= ;;
     *)      echo "usage: screenshot [region|full|window]"; exit 1 ;;
 esac
+
+# region shots go to the Quickshell editor when it's there (it saves / copies / throws away itself)
+if [ "$mode" = region ] && command -v qs >/dev/null && qs -c ekitai ipc show >/dev/null 2>&1; then
+    raw="${XDG_RUNTIME_DIR:-/tmp}/ekitai-shot-$(date +%s%N).png"
+    grim -g "$geom" "$raw" || exit 1
+    qs -c ekitai ipc call shot edit "$raw" >/dev/null 2>&1 && exit 0
+    mv "$raw" "$file" && wl-copy < "$file" && notify -i "$file" "Screenshot saved" "$file"
+    exit 0
+fi
 
 if [ -n "$geom" ]; then grim -g "$geom" "$file"; else grim "$file"; fi || exit 1
 wl-copy < "$file"

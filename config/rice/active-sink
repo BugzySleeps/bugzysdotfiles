@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# active-sink: print the name of the output the sound is actually going to: the sink of the first
+# playing stream, else of a paused one, else the default. Apps (cmus) can sit on a different output
+# than the default, and volume keys / cava need to follow the sound, not the default.
+
+pactl -f json list sinks 2>/dev/null | jq -r --argjson inputs "$(pactl -f json list sink-inputs 2>/dev/null || echo '[]')" \
+    --arg def "$(pactl get-default-sink 2>/dev/null)" '
+    (map({key: (.index | tostring), value: .name}) | from_entries) as $names
+    | ([$inputs[] | select(.corked | not)] + $inputs | map($names[.sink | tostring]) | map(select(.)) | first) // $def'

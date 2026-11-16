@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""music-lib [library|queue] — cmus's library (or queue) as JSON, with each song's tags, for the music panel.
+
+  [{ "path", "title", "artist", "album", "track", "length" (seconds) }]
+
+Tags are read with metaflac (FLAC) or ffprobe (anything else) and cached in ~/.cache/rice/music-lib.json
+by path + modification time, so only new or changed files are read again.
+"""
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+CACHE = Path.home() / ".cache/rice/music-lib.json"
+
+
+def cmus_list(which):
+    flag = "-q" if which == "queue" else "-l"
+    out = subprocess.run(["cmus-remote", "-C", f"save {flag} -"], capture_output=True, text=True).stdout
+    return [l for l in out.splitlines() if l.strip()]
+
+
+def tags_flac(path):
+    out = subprocess.run(["metaflac", "--export-tags-to=-", "--show-total-samples", "--show-sample-rate", path],
+                         capture_output=True, text=True).stdout.splitlines()
+    nums = [l for l in out if l.isdigit()]
+    tags = {}
+    for l in out:
+        k, sep, v = l.partition("=")
+        if sep:
+            tags.setdefault(k.upper(), v)
+    length = int(nums[0]) / int(nums[1]) if len(nums) >= 2 and int(nums[1]) else 0
+    return tags, length
+
+
+def tags_other(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration:format_tags", "-of", "json", path],
+                         capture_output=True, text=True).stdout
+    try:
+        f = json.loads(out).get("format", {})
+    except json.JSONDecodeError:
+        return {}, 0
+    return {k.upper(): v for k, v in f.get("tags", {}).items()}, float(f.get("duration", 0) or 0)
+
+
+def describe(path, cache):
+    try:
+        key = f"{path}:{os.path.getmtime(path)}"
+    except OSError:
+        return None
+    if key not in cache:
+        tags, length = tags_flac(path) if path.lower().endswith(".flac") else tags_other(path)
+        stem = Path(path).stem
+        artist, _, title = stem.partition(" - ")
+        cache[key] = {
+            "path": path,
+            "title": tags.get("TITLE") or title or stem,
+            "artist": tags.get("ARTIST") or (artist if title else ""),
+            "album": tags.get("ALBUM", ""),
+            "track": int((tags.get("TRACKNUMBER", "0").split("/")[0] or 0)) if tags.get("TRACKNUMBER", "0").split("/")[0].isdigit() else 0,
+            "length": round(length),
+        }
+    return cache[key]
+
+
+def main():
+    which = sys.argv[1] if len(sys.argv) > 1 else "library"
+    try:
+        cache = json.loads(CACHE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache = {}
+    songs = [s for s in (describe(p, cache) for p in cmus_list(which)) if s]
+    if which == "library":
+        songs.sort(key=lambda s: (s["artist"].lower(), s["album"].lower(), s["track"], s["title"].lower()))
+    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    CACHE.write_text(json.dumps(cache))
+    print(json.dumps(songs))
+
+
+if __name__ == "__main__":
+    main()

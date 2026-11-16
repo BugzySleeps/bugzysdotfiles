@@ -34,7 +34,7 @@ popup() {  # float it as a centred popup in the special workspace
 case $1 in
 status)
     if ! pgrep -x cmus >/dev/null; then
-        printf '{"text":"","tooltip":"cmus not running — click to start","class":"off"}\n'
+        printf '{"text":"󰝚","tooltip":"cmus not running — click to start","class":"off"}\n'
         exit
     fi
     q=$(cmus-remote -Q 2>/dev/null)
@@ -44,7 +44,7 @@ status)
     [[ -z $title ]] && { title=$(sed -n 's/^file //p' <<<"$q"); title=${title##*/}; title=${title%.*}; }
     song=$title; [[ -n $artist && -n $title ]] && song="$artist — $title"
     (( ${#song} > 40 )) && song="${song:0:39}…"
-    [[ $status == playing ]] && icon= || icon=
+    [[ $status == playing ]] && icon=󰐊 || icon=󰏤
     where=window; client | jq -e --arg n "special:$special" '.workspace.name == $n' >/dev/null && where=docked
     jq -nc --arg t "$icon${song:+  $song}" --arg c "$where $status" \
         --arg tip "${song:-cmus} — left click: show/hide, right click: $([[ $where == docked ]] && echo 'pop out as window' || echo 'dock into bar')" \

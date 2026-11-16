@@ -89,7 +89,9 @@
                 "󰕾"
             ]
         },
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click": "~/.config/rice/vol mute",
+        "on-scroll-up": "~/.config/rice/vol up",
+        "on-scroll-down": "~/.config/rice/vol down",
         "scroll-step": 5
     },
     "network": {

@@ -80,20 +80,21 @@ esac
 ARCH_PKGS=(hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland waybar kitty alacritty wofi
     mako fastfetch cava python python-evdev python-pillow grim slurp wl-clipboard jq libnotify playerctl
     brightnessctl wireplumber libpulse networkmanager dolphin wl-screenrec cmus libratbag piper
-    gnome-keyring fish ttf-meslo-nerd git curl)
+    gnome-keyring fish ttf-meslo-nerd git curl quickshell qt6-5compat)
 DEBIAN_PKGS=(hyprland hyprpaper hyprlock hyprpolkitagent xdg-desktop-portal-hyprland waybar kitty alacritty wofi
     mako-notifier fastfetch cava python3 python3-evdev python3-pil grim slurp wl-clipboard jq libnotify-bin
     playerctl brightnessctl wireplumber pulseaudio-utils network-manager dolphin wl-screenrec cmus
-    ratbagd piper gnome-keyring fish git curl xz-utils fontconfig)
+    ratbagd piper gnome-keyring fish git curl xz-utils fontconfig quickshell qml6-module-qt5compat-graphicaleffects)
 GENTOO_PKGS=(gui-wm/hyprland gui-apps/hyprpaper gui-apps/hyprlock sys-auth/hyprpolkitagent
     gui-libs/xdg-desktop-portal-hyprland gui-apps/waybar x11-terms/kitty x11-terms/alacritty gui-apps/wofi
     gui-apps/mako app-misc/fastfetch media-sound/cava dev-python/evdev dev-python/pillow gui-apps/grim
     gui-apps/slurp gui-apps/wl-clipboard app-misc/jq x11-libs/libnotify media-sound/playerctl
     app-misc/brightnessctl media-video/wireplumber media-libs/libpulse net-misc/networkmanager kde-apps/dolphin
     media-video/wl-screenrec media-sound/cmus dev-libs/libratbag app-misc/piper
-    gnome-base/gnome-keyring app-shells/fish dev-vcs/git net-misc/curl app-arch/xz-utils media-libs/fontconfig)
-# Gentoo: newer than stable, from overlays (hyproverlay: current Hyprland, guru: wl-screenrec)
-GENTOO_KEYWORDS=("*/*::hyproverlay" media-video/wl-screenrec app-misc/brightnessctl
+    gnome-base/gnome-keyring app-shells/fish dev-vcs/git net-misc/curl app-arch/xz-utils media-libs/fontconfig
+    gui-apps/quickshell dev-qt/qt5compat)
+# Gentoo: newer than stable, from overlays (hyproverlay: current Hyprland, guru: wl-screenrec, quickshell)
+GENTOO_KEYWORDS=("*/*::hyproverlay" media-video/wl-screenrec gui-apps/quickshell app-misc/brightnessctl
     app-misc/piper dev-libs/libratbag)
 
 available() {  # print the packages this distro's repos actually have
@@ -216,16 +217,20 @@ else
         command -v git >/dev/null || die "need git to download the dotfiles"
     fi
     if [[ -d $CLONE/.git ]]; then
-        git -C "$CLONE" pull -q --ff-only || die "couldn't update $CLONE (local changes?)"
+        git -C "$CLONE" pull -q --ff-only --recurse-submodules || die "couldn't update $CLONE (local changes?)"
         good "updated $CLONE"
     else
         [[ -e $CLONE ]] && die "$CLONE already exists and isn't a clone of the dotfiles"
-        git clone -q "https://github.com/$REPO.git" "$CLONE" || die "couldn't download the dotfiles"
+        git clone -q --recurse-submodules "https://github.com/$REPO.git" "$CLONE" || die "couldn't download the dotfiles"
         good "downloaded to $CLONE"
     fi
     exec bash "$CLONE/install.sh" "${ARGS[@]}" </dev/null   # carry on with the downloaded copy
 fi
 bold "Installing bugzysdotfiles from $DOT ($distro)"
+# the Quickshell shell is its own repo (liquid), a submodule at config/quickshell/ekitai
+if [[ -f $DOT/.gitmodules ]] && command -v git >/dev/null; then
+    git -C "$DOT" submodule update -q --init --recursive || meh "couldn't fetch the Quickshell shell (config/quickshell/ekitai)"
+fi
 
 # ── 1. packages ──────────────────────────────────────────────────────────────
 bold "Packages"
@@ -258,6 +263,16 @@ else
     meh "install MesloLGS Nerd Font yourself: https://www.nerdfonts.com/font-downloads"
 fi
 
+# the Quickshell rice's fonts ship in the repo (Departure Mono, OFL; Symbols Nerd Font, MIT)
+if command -v fc-cache >/dev/null; then
+    mkdir -p "$HOME/.local/share/fonts"
+    if [ ! -e "$HOME/.local/share/fonts/ekitai" ]; then
+        ln -s "$DOT/fonts" "$HOME/.local/share/fonts/ekitai"
+    fi
+    fc-cache -f "$HOME/.local/share/fonts" >/dev/null
+    good "linked Departure Mono + Symbols Nerd Font (the ekitai-qs fonts)"
+fi
+
 # ── 3. link everything ───────────────────────────────────────────────────────
 bold "Linking configs"
 BACKUP="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
@@ -285,6 +300,19 @@ for f in "$DOT"/bin/*; do
     link "$f" "$HOME/.local/bin/$(basename "$f")"
 done
 link "$DOT/config/rice/rice" "$HOME/.local/bin/rice"
+
+# Notifications: let D-Bus start the current rice's daemon (mako, or a Quickshell rice's shell)
+# instead of always mako, which would otherwise grab the name before a Quickshell shell can.
+svc="$HOME/.local/share/dbus-1/services/org.freedesktop.Notifications.service"
+mkdir -p "$(dirname "$svc")"
+cat > "$svc" <<EOF
+# Written by ~/dotfiles/install.sh: start the current rice's notification daemon (mako, or its
+# Quickshell shell) instead of always mako, so a Quickshell rice doesn't lose notifications to it.
+[D-BUS Service]
+Name=org.freedesktop.Notifications
+Exec=$HOME/.config/rice/rice shell
+EOF
+good "${svc/#$HOME/\~} (notifications follow the rice)"
 
 # ── 4. rice ──────────────────────────────────────────────────────────────────
 if [[ -z $RICE ]]; then   # keep the rice you're on when re-running
