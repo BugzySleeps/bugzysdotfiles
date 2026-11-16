@@ -11,8 +11,10 @@
   eq unmuffle        and back
 
 How: PipeWire's audioconvert (the converter every stream already runs through) can host filter graphs,
-in numbered slots that run in order. The EQ (a preamp and 10 biquads, one per slot) goes into each playing
-stream's converter, and gains change live through the same converter. No extra process, no rerouting: outputs, volume keys and cava stay exactly as they are.
+in numbered slots that run in order. The EQ is one graph (a preamp and 10 biquads, chained) in slot 0 of
+each playing stream's converter, and gains change live through the same converter. (One graph, not one
+slot per filter: a converter only has room for about 8, so the top bands never loaded, and turning it
+on again on a full stream loaded nothing at all.) No extra process, no rerouting: outputs, volume keys and cava stay exactly as they are.
 Settings live in ~/.local/state/rice/eq.json.
 """
 import json
@@ -34,7 +36,11 @@ PRESETS = {
     "classical": [4, 3, 2, 1, -1, -1, 0, 2, 3, 4],
 }
 STATE = Path.home() / ".local/state/rice/eq.json"
-SLOT = "audioconvert.filter-graph."             # + N: one slot per filter (a multi-filter graph doesn't run there)
+SLOT = "audioconvert.filter-graph."
+EQ_SLOT = f"{SLOT}0"
+MUFFLE_SLOT = f"{SLOT}1"
+# the old one-filter-per-slot layout's names: streams that started before the change may still carry them
+OLD = ["pre"] + [f"b{i}" for i in range(1, 11)]
 
 
 def load():
@@ -63,12 +69,13 @@ def streams():
             and o.get("info", {}).get("props", {}).get("media.class") == "Stream/Output/Audio"]
 
 
-def filters():
-    """(name, biquad) in order: pre turns everything down by the biggest boost, so nothing clips; then the bands."""
-    out = [("pre", "bq_highshelf")]
-    for i in range(1, len(FREQS) + 1):
-        out.append((f"b{i}", "bq_lowshelf" if i == 1 else "bq_highshelf" if i == len(FREQS) else "bq_peaking"))
-    return out
+def graph():
+    """The EQ as one graph: pre (turns everything down by the biggest boost, so nothing clips), then the bands."""
+    names = [("eqpre", "bq_highshelf")] + [(f"eq{i}", "bq_lowshelf" if i == 1 else "bq_highshelf" if i == len(FREQS) else "bq_peaking")
+                                           for i in range(1, len(FREQS) + 1)]
+    nodes = " ".join(f"{{ type = builtin name = {n} label = {l} }}" for n, l in names)
+    links = " ".join(f'{{ output = \\"{a}:Out\\" input = \\"{b}:In\\" }}' for (a, _), (b, _) in zip(names, names[1:]))
+    return f"{{ nodes = [ {nodes} ] links = [ {links} ] }}"
 
 
 def controls(gains, full=True):
@@ -76,11 +83,11 @@ def controls(gains, full=True):
     pre = -max(0, max(gains))
     out = []
     if full:
-        out += ['"pre:Freq" 1.0', '"pre:Q" 1.0']
+        out += ['"eqpre:Freq" 1.0', '"eqpre:Q" 1.0']
         for i, f in enumerate(FREQS, 1):
-            out += [f'"b{i}:Freq" {f}.0', f'"b{i}:Q" 1.0']
-    out.append(f'"pre:Gain" {pre:.1f}')
-    out += [f'"b{i}:Gain" {g:.1f}' for i, g in enumerate(gains, 1)]
+            out += [f'"eq{i}:Freq" {f}.0', f'"eq{i}:Q" 1.0']
+    out.append(f'"eqpre:Gain" {pre:.1f}')
+    out += [f'"eq{i}:Gain" {g:.1f}' for i, g in enumerate(gains, 1)]
     return out
 
 
@@ -90,8 +97,9 @@ def set_params(node, params):
 
 
 def attach(node, gains):
-    set_params(node, [f'"{SLOT}{n}" "{{ nodes = [ {{ type = builtin name = {name} label = {label} }} ] }}"'
-                      for n, (name, label) in enumerate(filters())])
+    # leftovers from the old layout pass the sound through untouched (flat), then the EQ goes into slot 0
+    set_params(node, [f'"{n}:Gain" 0.0' for n in OLD])
+    set_params(node, [f'"{EQ_SLOT}" "{graph()}"'])
     for wait in (0.3, 0.7):                      # the converter loads it in the background: set it, then again in case
         time.sleep(wait)
         set_params(node, controls(gains))
@@ -103,7 +111,6 @@ def detach(node):
     set_params(node, controls([0] * len(FREQS)))
 
 
-MUFFLE_SLOT = f"{SLOT}{len(FREQS) + 1}"         # after the preamp and the bands: its own slot
 MUFFLE_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "ekitai-muffled"
 
 
