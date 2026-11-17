@@ -16,6 +16,7 @@
   rice wall default  back to the theme's own wallpaper and colours
   rice accent <image|url>  for now, take the colours from an image (album art): the shell and the
                      window borders crossfade to it; the wallpaper and the theme stay as they are
+                     (and the terminals); with --wall, the wallpaper too: one made from the cover's colours
   rice accent off    back to the theme's colours
   rice walls --json  the wallpapers on offer, each with the palette it would give (for the Quickshell picker)
 
@@ -375,11 +376,104 @@ def set_wallpaper(theme):
         spawn("hyprpaper")
 
 
-def accent(arg):
-    """Recolour just the live parts (the Quickshell shell, through palette.json, and Hyprland's borders)
-    from an image, without re-rendering anything: cheap enough to follow the music, track by track."""
+def screen_size():
+    """Logical size of the focused monitor (1920x1080 if hyprctl can't tell us)."""
+    try:
+        out = subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True).stdout
+        m = next((m for m in json.loads(out) if m.get("focused")), None)
+        return round(m["width"] / m.get("scale", 1)), round(m["height"] / m.get("scale", 1))
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError, StopIteration):
+        return 1920, 1080
+
+
+ARTWALLS = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "rice-artwall"
+
+
+def cover_colours(cover):
+    """A cover's colours, the ones it's made of most first; greys only if that's all it has."""
+    small = cover.copy()
+    small.thumbnail((64, 64))
+    q = small.quantize(10)
+    pal = q.getpalette()
+    found = []
+    for n, i in sorted(q.getcolors(), reverse=True):
+        h, s, v = colorsys.rgb_to_hsv(*(x / 255 for x in pal[i * 3:i * 3 + 3]))
+        found.append((n, h, s, v))
+    vivid = [c for c in found if c[2] > 0.22 and c[3] > 0.16]
+    picks = sorted(vivid, key=lambda c: -c[0] * (0.4 + c[2])) if vivid else found
+    out = []
+    for c in picks:                               # skip near-repeats of a hue already taken
+        if all(min(abs(c[1] - o[1]), 1 - abs(c[1] - o[1])) > 0.04 or abs(c[3] - o[3]) > 0.3 for o in out):
+            out.append(c)
+    return (out or found)[:4]
+
+
+def art_wall(img, grey=False):
+    """The backdrop for the playing track's wallpaper, in the cover's colours: a dark ground with soft glows,
+    and a vignette (grey: a black-and-white cover, so greys and white light). It's all soft, so it's made at a quarter of the screen's size (quick: it's made while the
+    track starts) and scaled up when shown. The shell draws the rest on top (desktop/Wallpaper.qml): grain,
+    the moving design (waves, aurora, drips or a glass orb, shaders/artwall.frag), the cover and the song.
+    Made once per cover and screen size, in $XDG_RUNTIME_DIR."""
+    import hashlib
+    import random
+    W, H = (max(1, n // 4) for n in screen_size())
+    key = hashlib.sha1(f"{img}|{os.path.getmtime(img)}|{W}x{H}|4{'g' if grey else ''}".encode()).hexdigest()[:16]
+    out = ARTWALLS / f"{key}.png"
+    if out.is_file():
+        return out
+    from PIL import Image, ImageChops, ImageDraw, ImageFilter
+    cover = Image.open(img).convert("RGB")
+    cols = cover_colours(cover)
+    rnd = random.Random(key)
+
+    def rgb(h, s, v):
+        s = 0 if grey else s
+        return tuple(round(x * 255) for x in colorsys.hsv_to_rgb(h % 1, max(0.0, min(1.0, s)), max(0.0, min(1.0, v))))
+
+    # the ground: dark, in the cover's main colour, with two soft glows (drawn small and blurred, then scaled up)
+    w, h = max(1, W // 2), max(1, H // 2)
+    h0, s0 = cols[0][1], cols[0][2]
+    im = Image.new("RGB", (w, h), rgb(h0, s0 * 0.8, 0.05))
+    for j, (x, y, r, a) in enumerate([(0.22, 0.50, 0.55, 150), (0.86, 0.12, 0.62, 120)]):
+        n, ch, cs, cv = cols[j % len(cols)]
+        x, y = x + rnd.uniform(-0.04, 0.04), y + rnd.uniform(-0.04, 0.04)
+        rx, ry = r * w * 0.5, r * h * 0.7
+        layer = Image.new("L", (w, h), 0)
+        ImageDraw.Draw(layer).ellipse((x * w - rx, y * h - ry, x * w + rx, y * h + ry), fill=a)
+        layer = layer.filter(ImageFilter.GaussianBlur(min(w, h) * 0.16))
+        im = Image.composite(Image.new("RGB", (w, h), rgb(ch, 0.2 + cs * 0.8, 0.35 + 0.25 * cv)), im, layer)
+    im = im.resize((W, H), Image.BICUBIC).filter(ImageFilter.GaussianBlur(1))
+    # vignette
+    vig = Image.new("L", (w, h), 255)
+    ImageDraw.Draw(vig).ellipse((-w * 0.2, -h * 0.25, w * 1.2, h * 1.25), fill=0)
+    vig = vig.filter(ImageFilter.GaussianBlur(min(w, h) * 0.12)).resize((W, H), Image.BICUBIC)
+    im = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), im, vig.point(lambda p: p * 0.7))
+    ARTWALLS.mkdir(parents=True, exist_ok=True)
+    for old in sorted(ARTWALLS.glob("*.png"), key=os.path.getmtime)[:-8]:   # keep the last few
+        old.unlink(missing_ok=True)
+    tmp = out.with_suffix(".tmp.png")
+    im.save(tmp, compress_level=1)
+    tmp.replace(out)
+    return out
+
+
+def render_some(theme, rels):
+    """Re-render just these templates (paths under ~/.config); a theme's own copy wins."""
+    for rel in rels:
+        for root in (THEMES / theme["name"] / "templates", TEMPLATES):
+            src = root / rel
+            if src.is_file():
+                (CONFIG / rel).write_text(render(src.read_text(), theme, src))
+                break
+
+
+def accent(arg, wall=False):
+    """Recolour just the live parts (the Quickshell shell, through palette.json, Hyprland's borders and the
+    terminals) from an image: cheap enough to follow the music, track by track. wall: the wallpaper too,
+    one made from the image's colours (art_wall); the shell puts the cover and the song on it."""
     name = current() or sys.exit("rice: no current theme")
     theme = load(name)
+    theme["home_wallpaper"] = theme.get("wallpaper", "")
     if arg != "off":
         img = arg
         if re.match(r"https?://", arg):          # art from the web (spotify, browsers): fetch it first
@@ -390,9 +484,17 @@ def accent(arg):
         if not Path(img).is_file():
             sys.exit(f"rice: no image {img}")
         hue, colour = tone(img)
-        if colour > 0:                           # a colourless cover keeps the usual colours
-            recolour(theme, hue, colour)
+        recolour(theme, hue, colour)             # a colourless cover (colour 0): everything in greys
+        if wall:
+            theme["wallpaper"] = str(art_wall(img, grey=colour == 0))
+            from PIL import Image
+            cols = cover_colours(Image.open(img).convert("RGB"))
+            # for the shell's moving design: each colour livelier and lighter, so it glows on the dark
+            theme["art"] = {"cover": arg, "colors": ["#%02x%02x%02x" % tuple(round(x * 255) for x in colorsys.hsv_to_rgb(
+                h, 0 if colour == 0 else min(1.0, 0.25 + s * 0.85), min(1.0, 0.6 + 0.35 * v))) for n, h, s, v in cols]}
     write_palette(theme)
+    render_some(theme, [Path("kitty/rice.conf"), Path("alacritty/rice.toml"), Path("fastfetch/config.jsonc")])
+    sh("pkill", "-USR1", "-x", "kitty")          # kitty re-reads its config; alacritty watches its own
     h = theme["hypr"]
     actives = ", ".join(f'"rgba({_hex(c)})"' for c in h["border_active"])
     sh("hyprctl", "eval", f'hl.config({{ general = {{ col = {{ active_border = {{ colors = {{ {actives} }}, angle = {h.get("border_angle", 0)} }}, '
@@ -423,6 +525,8 @@ def write_palette(theme):
     """The colours and wallpaper as JSON, for shells that recolour live instead of reloading."""
     PALETTE.parent.mkdir(parents=True, exist_ok=True)
     data = {k: theme.get(k) for k in ("name", "wallpaper", "colors", "hypr", "term")}
+    # with an album wallpaper up (accent --wall): the cover, and the wallpaper it stands in for
+    data.update({k: theme[k] for k in ("art", "home_wallpaper") if k in theme})
     tmp = PALETTE.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=1) + "\n")
     tmp.replace(PALETTE)
@@ -442,6 +546,9 @@ def apply(name, note=None):
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render(src.read_text(), theme, src))
 
+    # the palette straight away: a Quickshell shell starts loading the new wallpaper while the rest happens
+    write_palette(theme)
+
     # 2. hyprlock art (squiggly box, password-dot shapes) in this theme's colours
     lockenv = {**os.environ, "LOCK_LINE": theme["colors"]["accent"], "LOCK_FILL": theme["colors"]["bg1"],
                "LOCK_DOT": theme["colors"]["fg"]}
@@ -459,9 +566,7 @@ def apply(name, note=None):
 
     CURRENT.write_text(name + "\n")
 
-    # 4. live reloads. The palette goes first: a Quickshell shell starts loading the new wallpaper while
-    #    hyprland and the terminals reload, so the wipe starts closer to when they change
-    write_palette(theme)
+    # 4. live reloads (the palette went out first, so the shell's wallpaper wipe starts closer to when these change)
     sh("hyprctl", "reload")
     disabled = CONFIG / "waybar" / "disabled"    # toggle.sh won't open the bar while this exists
     if not theme["waybar"]:
@@ -549,7 +654,8 @@ def main():
     elif arg in ("-h", "--help", "help"):
         print(__doc__.strip())
     elif arg == "accent":
-        accent(sys.argv[2] if len(sys.argv) > 2 else sys.exit("usage: rice accent <image|url>|off"))
+        args = [a for a in sys.argv[2:] if a != "--wall"]
+        accent(args[0] if args else sys.exit("usage: rice accent <image|url> [--wall] | off"), wall="--wall" in sys.argv)
     elif arg == "lock":
         lock_screen(boot="--boot" in sys.argv)
     elif arg == "wall":
