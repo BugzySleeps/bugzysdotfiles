@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""claude-island — a Claude Code hook that swells the Quickshell dynamic island (bar/DynamicIsland.qml).
+
+  claude-island done     (a Stop hook: Claude finished its turn)
+  claude-island needs    (a Notification hook: Claude is waiting on you, for a permission or an answer)
+
+Reads the hook's JSON on stdin for the project folder (and, for `needs`, what it's waiting on), hands it to the
+shell and returns straight away, so it never holds Claude up. Does nothing if the shell isn't running.
+"""
+import json, os, subprocess, sys
+
+kind = sys.argv[1] if len(sys.argv) > 1 else "done"
+try:
+    hook = json.load(sys.stdin)
+except Exception:
+    hook = {}
+if hook.get("stop_hook_active"):                 # another Stop hook kept Claude going: not done yet
+    sys.exit(0)
+
+project = os.path.basename((hook.get("cwd") or "").rstrip("/")) or "~"
+if project == os.path.basename(os.path.expanduser("~")):
+    project = "~"
+text = ""
+if kind == "needs":
+    msg = (hook.get("message") or "").strip()
+    text = "needs your ok" if "permission" in msg.lower() else "needs you"
+
+subprocess.Popen(["qs", "-c", "ekitai", "ipc", "call", "island", "claude", kind, project, text],
+                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)

@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""font-add — install a font for the Quickshell shell (settings → look → font → add a font).
+
+  font-add [file]      no file: pick one (zenity)
+
+Takes a font file (.ttf .otf .ttc .otc .woff .woff2), or something with fonts inside: a .zip, or a macOS
+.dmg / .pkg (unpacked layer by layer with 7-Zip: the disk image, the installer, its payload). Copies every
+font it finds into ~/.local/share/fonts/ekitai-user (the shell loads that folder), refreshes fontconfig, and
+prints {"families": [...]} (or {"error": "..."}) for the shell.
+"""
+import json, os, shutil, subprocess, sys, tempfile
+
+FONTS = (".ttf", ".otf", ".ttc", ".otc", ".woff", ".woff2")
+DEST = os.environ.get("FONT_ADD_DEST") or os.path.expanduser("~/.local/share/fonts/ekitai-user")   # (the env: for testing)
+SEVENZIP = shutil.which("7zz") or shutil.which("7z") or shutil.which("7za")
+
+
+def done(**out):
+    print(json.dumps(out))
+    sys.exit(0)
+
+
+def pick():
+    try:
+        r = subprocess.run(["zenity", "--file-selection", "--title=add a font",
+                            "--file-filter=fonts and font packs | *.ttf *.otf *.ttc *.otc *.woff *.woff2 *.zip *.dmg *.pkg "
+                            "*.TTF *.OTF *.TTC *.OTC *.WOFF *.WOFF2 *.ZIP *.DMG *.PKG",
+                            "--file-filter=everything | *"], capture_output=True, text=True)
+    except FileNotFoundError:
+        done(error="no file picker (zenity) installed")
+    return r.stdout.strip()
+
+
+def unpack(path, into):
+    """one layer of an archive into `into`; False if it isn't one 7-Zip (or unzip) can open"""
+    os.makedirs(into, exist_ok=True)
+    if SEVENZIP:
+        r = subprocess.run([SEVENZIP, "x", "-y", "-bso0", "-bsp0", "-o" + into, path],
+                           capture_output=True, text=True)
+        if r.returncode in (0, 1) and os.listdir(into):  # 1: warnings (a dmg's extra partitions), still unpacked
+            return True
+    if path.lower().endswith(".zip") and shutil.which("unzip"):
+        return subprocess.run(["unzip", "-qo", path, "-d", into]).returncode == 0
+    return False
+
+
+def looks_packed(name):
+    n = name.lower()
+    return (n.endswith((".dmg", ".pkg", ".zip", ".xar", ".cpio", ".gz", ".bz2", ".xz", ".tar", ".hfs", ".img"))
+            or n in ("payload", "payload~") or n.endswith("payload"))
+
+
+def harvest(root, found, depth=0):
+    """every font under `root`, opening archives inside it (a dmg holds a pkg holds a payload…)"""
+    for dirpath, _, files in os.walk(root):
+        for f in files:
+            p = os.path.join(dirpath, f)
+            if f.lower().endswith(FONTS) and not f.startswith("._"):
+                found.append(p)
+            elif depth < 6 and looks_packed(f):
+                sub = p + ".unpacked"
+                if unpack(p, sub):
+                    harvest(sub, found, depth + 1)
+
+
+def families(path):
+    r = subprocess.run(["fc-scan", "--format", "%{family[0]}\n", path], capture_output=True, text=True)
+    return [l.strip() for l in r.stdout.splitlines() if l.strip()]
+
+
+src = sys.argv[1] if len(sys.argv) > 1 else pick()
+if not src:
+    done(cancelled=True)
+src = os.path.expanduser(src)
+if not os.path.isfile(src):
+    done(error="no such file")
+
+with tempfile.TemporaryDirectory(prefix="font-add-") as tmp:
+    found = []
+    if src.lower().endswith(FONTS):
+        found.append(src)
+    elif unpack(src, os.path.join(tmp, "in")):
+        harvest(os.path.join(tmp, "in"), found)
+    else:
+        done(error="not a font, or nothing it can open")
+
+    os.makedirs(DEST, exist_ok=True)
+    names = []
+    for f in found:
+        fam = families(f)
+        if not fam:                              # not really a font
+            continue
+        shutil.copy2(f, os.path.join(DEST, os.path.basename(f)))
+        names += [n for n in fam if n not in names]
+
+if not names:
+    done(error="no fonts inside")
+subprocess.run(["fc-cache", "-f", DEST], capture_output=True)
+done(families=names)

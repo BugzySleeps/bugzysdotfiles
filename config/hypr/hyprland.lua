@@ -162,6 +162,8 @@ hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "
 -- windows: short ease-out curves instead of springs, so opening several at once (and the
 -- re-tiling it causes) settles fast instead of stacking up long springy moves
 hl.animation({ leaf = "windows",       enabled = true,  speed = 1.5,  bezier = "easeOutQuint" })
+-- moving windows (panning the infinite desktop, scrolling the row) glides on a spring, so it keeps some weight
+hl.animation({ leaf = "windowsMove",   enabled = true,  speed = 4.79, spring = "easy" })
 hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 3,    bezier = "emphasizedDecel", style = "slide bottom" })  -- new windows rise from the bottom
 hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 0.8,  bezier = "linear",       style = "popin 95%" })
 hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 0.8,  bezier = "quick" })
@@ -456,6 +458,8 @@ hl.layer_rule({
     end)
 
 -- Infinite desktop keybinds
+-- (its "navigate right / down" landed on SUPER + right / down, on top of the focus binds above, so each press
+-- moved twice: those two are dropped; SUPER + H / K still navigate left / up)
 hl.bind("SUPER" .. " + Z", hl.dsp.focus({ workspace = "-1" }))
 hl.bind("SUPER" .. " + X", hl.dsp.focus({ workspace = "+1" }))
 hl.bind("SUPER" .. " + SHIFT + Z", hl.dsp.window.move({ workspace = "-1" }))
@@ -465,15 +469,13 @@ hl.bind("SUPER" .. " + H", hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.p
 hl.bind("SUPER" .. " + ALT + left", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py left"))
 hl.bind("SUPER" .. " + SHIFT + left", hl.dsp.exec_cmd("python3 ~/scripts/move_window.py left"), { repeating = true })
 hl.bind("SUPER" .. " + CTRL + left", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py left"), { repeating = true })
-hl.bind("SUPER" .. " + L", hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py right"))
-hl.bind("SUPER" .. " + ALT + right", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py right"))
+hl.bind("SUPER" .. " + ALT + L", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py right"))
 hl.bind("SUPER" .. " + SHIFT + right", hl.dsp.exec_cmd("python3 ~/scripts/move_window.py right"), { repeating = true })
 hl.bind("SUPER" .. " + CTRL + right", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py right"), { repeating = true })
 hl.bind("SUPER" .. " + K", hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py up"))
 hl.bind("SUPER" .. " + ALT + up", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py up"))
 hl.bind("SUPER" .. " + SHIFT + up", hl.dsp.exec_cmd("python3 ~/scripts/move_window.py up"), { repeating = true })
 hl.bind("SUPER" .. " + CTRL + up", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py up"), { repeating = true })
-hl.bind("SUPER" .. " + down", hl.dsp.exec_cmd("python3 ~/scripts/navigate_windows.py down"))
 hl.bind("SUPER" .. " + ALT + J", hl.dsp.exec_cmd("python3 ~/scripts/move_window_tiled.py down"))
 hl.bind("SUPER" .. " + SHIFT + down", hl.dsp.exec_cmd("python3 ~/scripts/move_window.py down"), { repeating = true })
 hl.bind("SUPER" .. " + CTRL + down", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py down"), { repeating = true })
