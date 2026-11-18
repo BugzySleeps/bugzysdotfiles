@@ -552,13 +552,15 @@ def apply(name, note=None):
     # 2. hyprlock art (squiggly box, password-dot shapes) in this theme's colours
     lockenv = {**os.environ, "LOCK_LINE": theme["colors"]["accent"], "LOCK_FILL": theme["colors"]["bg1"],
                "LOCK_DOT": theme["colors"]["fg"]}
+    # (these and the mouse wait out the switch, at the lowest priority: on two cores they'd stutter it)
+    later = ["sh", "-c", 'sleep 1.5; exec nice -n 19 "$@"', "later"]
     for script in ("lockart.py", "lockdots.py"):
         if (CONFIG / "hypr" / script).is_file():
-            subprocess.Popen(["python3", script], cwd=CONFIG / "hypr", env=lockenv, stdout=subprocess.DEVNULL,
+            subprocess.Popen(later + ["python3", script], cwd=CONFIG / "hypr", env=lockenv, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, start_new_session=True)
 
     # mouse LEDs via ratbag/Piper (in the background: ratbagctl takes a moment)
-    spawn(str(RICE / "mouse-color"), theme["mouse"])
+    spawn(*later, str(RICE / "mouse-color"), theme["mouse"])
 
     # 3. wallpaper and pet
     set_wallpaper(theme)
