@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
-"""music-lib [library|queue] — cmus's library (or queue) as JSON, with each song's tags, for the music panel.
+"""music-lib [library|queue|files|playlists|playlist <name>|create <name> <file>...|add <name> <file>...]
+— cmus's music as JSON, for the music panel.
 
-  [{ "path", "title", "artist", "album", "track", "length" (seconds) }]
+  library / queue / files / playlist <name>:  [{ "path", "title", "artist", "album", "track", "length" (seconds) }]
+  playlists:                                  [{ "name", "count" }]
+  create / add <name> <file>...:              { "ok": true, "name", "msg" } or { "ok": false, "error" }
+
+files is every song under ~/Music (or $MUSIC_DIR), in cmus's library or not. create writes a new cmus playlist and,
+if cmus is running, imports it so it shows up there straight away. add appends songs (skipping ones already there)
+to a playlist; a running cmus is told to drop its copy and re-import the file, since there's no "add to playlist <name>"
+command. That means changes made to that playlist inside cmus since it last saved (it saves when it quits) are lost.
+
+Playlists are read from cmus's playlist files (~/.config/cmus/playlists), which cmus writes when it quits.
 
 Tags are read with metaflac (FLAC) or ffprobe (anything else) and cached in ~/.cache/rice/music-lib.json
 by path + modification time, so only new or changed files are read again.
@@ -13,6 +23,73 @@ import sys
 from pathlib import Path
 
 CACHE = Path.home() / ".cache/rice/music-lib.json"
+CMUS_HOME = Path(os.environ.get("CMUS_HOME") or Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "cmus")
+PLAYLISTS = CMUS_HOME / "playlists"
+MUSIC = Path(os.environ.get("MUSIC_DIR") or Path.home() / "Music")
+AUDIO = {".flac", ".mp3", ".ogg", ".opus", ".m4a", ".aac", ".wav", ".wma", ".wv", ".ape", ".mka"}
+
+
+def music_files():
+    found = []
+    for root, dirs, files in os.walk(MUSIC):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        found += [os.path.join(root, f) for f in files if Path(f).suffix.lower() in AUDIO]
+    return found
+
+
+def create(name, paths):
+    name = name.strip()
+    if not name:                                # no name given: "new playlist", "new playlist 2", ...
+        name = next(n for n in ("new playlist" + (f" {i}" if i > 1 else "") for i in range(1, 1000))
+                    if not (PLAYLISTS / n).exists())
+    if not name or "/" in name or name.startswith("."):
+        return {"ok": False, "error": "that name won't work"}
+    if (PLAYLISTS / name).exists():
+        return {"ok": False, "error": f"there's already a playlist called {name}"}
+    if not paths:
+        return {"ok": False, "error": "pick some songs first"}
+    PLAYLISTS.mkdir(parents=True, exist_ok=True)
+    (PLAYLISTS / name).write_text("".join(p + "\n" for p in paths))
+    # cmus only reads its playlist folder at start, so hand a running cmus the new one too
+    subprocess.run(["cmus-remote", "-C", f"pl-import {PLAYLISTS / name}"], capture_output=True)
+    return {"ok": True, "name": name, "msg": f"saved {name}"}
+
+
+def cmus_running():
+    return subprocess.run(["cmus-remote", "-Q"], capture_output=True).returncode == 0
+
+
+def add(name, paths):
+    have = playlist_paths(name)
+    if not (PLAYLISTS / name).is_file() or (PLAYLISTS / name).parent != PLAYLISTS:
+        return {"ok": False, "error": f"there's no playlist called {name}"}
+    new = [p for p in dict.fromkeys(paths) if p not in have]
+    if not new:
+        return {"ok": False, "error": f"those are all in {name} already"}
+    if cmus_running():
+        # pl-delete also removes the file, so write it again afterwards and import it
+        subprocess.run(["cmus-remote", "-C", f"pl-delete {name}"], capture_output=True)
+        (PLAYLISTS / name).write_text("".join(p + "\n" for p in have + new))
+        subprocess.run(["cmus-remote", "-C", f"pl-import {PLAYLISTS / name}"], capture_output=True)
+    else:
+        (PLAYLISTS / name).write_text("".join(p + "\n" for p in have + new))
+    skipped = len(paths) - len(new)
+    msg = f"added {len(new)} to {name}" + (f" ({skipped} already there)" if skipped else "")
+    return {"ok": True, "name": name, "msg": msg}
+
+
+def playlist_files():
+    try:
+        return sorted((p for p in PLAYLISTS.iterdir() if p.is_file()), key=lambda p: p.name.lower())
+    except FileNotFoundError:
+        return []
+
+
+def playlist_paths(name):
+    p = PLAYLISTS / name
+    if p.parent != PLAYLISTS or not p.is_file():
+        return []
+    return [l.strip() for l in p.read_text(errors="replace").splitlines() if l.strip() and not l.startswith("#")]
 
 
 def cmus_list(which):
@@ -66,15 +143,29 @@ def describe(path, cache):
 
 def main():
     which = sys.argv[1] if len(sys.argv) > 1 else "library"
+    if which in ("create", "add"):
+        print(json.dumps((create if which == "create" else add)(sys.argv[2] if len(sys.argv) > 2 else "", sys.argv[3:])))
+        return
+    if which == "playlists":
+        print(json.dumps([{"name": p.name, "count": len(playlist_paths(p.name))} for p in playlist_files()]))
+        return
     try:
         cache = json.loads(CACHE.read_text())
     except (FileNotFoundError, json.JSONDecodeError):
         cache = {}
-    songs = [s for s in (describe(p, cache) for p in cmus_list(which)) if s]
-    if which == "library":
+    if which == "playlist":
+        paths = playlist_paths(sys.argv[2] if len(sys.argv) > 2 else "")
+    elif which == "files":
+        paths = music_files()
+    else:
+        paths = cmus_list(which)
+    songs = [s for s in (describe(p, cache) for p in paths) if s]
+    if which in ("library", "files"):
         songs.sort(key=lambda s: (s["artist"].lower(), s["album"].lower(), s["track"], s["title"].lower()))
     CACHE.parent.mkdir(parents=True, exist_ok=True)
-    CACHE.write_text(json.dumps(cache))
+    tmp = CACHE.with_suffix(f".{os.getpid()}.tmp")    # whole or not at all: another run may be reading it
+    tmp.write_text(json.dumps(cache))
+    tmp.replace(CACHE)
     print(json.dumps(songs))
 
 
