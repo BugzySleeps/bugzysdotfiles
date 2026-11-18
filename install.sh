@@ -300,6 +300,14 @@ for f in "$DOT"/bin/*; do
     link "$f" "$HOME/.local/bin/$(basename "$f")"
 done
 link "$DOT/config/rice/rice" "$HOME/.local/bin/rice"
+# wallpapers that ship with the rice (claude.png and its moving scene, .scene/claude: liquid draws it over the
+# picture and moves it to the music), one by one into ~/Pictures/wallpapers so your own stay where they are
+for f in "$DOT"/wallpapers/*; do
+    link "$f" "$HOME/Pictures/wallpapers/$(basename "$f")"
+done
+for d in "$DOT"/wallpapers/.scene/*/; do
+    link "${d%/}" "$HOME/Pictures/wallpapers/.scene/$(basename "$d")"
+done
 
 # Notifications: let D-Bus start the current rice's daemon (mako, or a Quickshell rice's shell)
 # instead of always mako, which would otherwise grab the name before a Quickshell shell can.

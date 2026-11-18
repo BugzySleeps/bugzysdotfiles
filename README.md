@@ -109,6 +109,11 @@ in place of waybar, mako and wofi:
   rice from it (bar, panels, borders, terminal, lock screen): your one-colour palette, turned to the image's main
   hue, or greys for a colourless image. The shell never reloads for it: the new wallpaper wipes up from the bottom
   while the colours crossfade. `←/→` or scroll, `Enter` to apply. Also `rice wall <image>` / `rice wall default`.
+- **scene wallpapers**: a wallpaper can bring a moving scene, `.scene/<its name>/scene.qml` beside it, which liquid
+  draws over the picture and moves to the music (and, with album colours on, turns to the album's colour). One
+  ships in `wallpapers/` (linked into `~/Pictures/wallpapers` by the installer): **claude**, the Claude spark with
+  each ray stretching to its slice of the music, a ring of bars, beat rings, drifting 6-cookies and a little pixel
+  Claude orbiting it like a moon. Its `make.py` remakes the pictures it's built from, `shot.sh` the still.
 - **shape** (control center, or right-click the desktop): `square` (the default), `round` or `squiggle`, for
   everything at once.
   Round gives rounded boxes, pills, circle buttons and dot meters. Squiggle gives wavy-edged boxes, scalloped
