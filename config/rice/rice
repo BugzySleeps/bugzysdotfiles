@@ -140,7 +140,8 @@ def load(name, picked=True):
     state = wall_state(name) if picked and theme.get("wallpaper_picker") else None
     if state and Path(state["path"]).is_file():
         theme["wallpaper"] = state["path"]
-        recolour(theme, state["hue"], state["colour"])
+        if theme.get("recolour", True):          # recolour = false: the theme keeps its colours on any wallpaper
+            recolour(theme, state["hue"], state["colour"])
     theme["name"] = name
     theme["dir"] = str(THEMES / name)
     theme.setdefault("term", {}).setdefault("opacity", 0.4)   # kitty background_opacity
@@ -327,14 +328,21 @@ def set_pet(theme):
         spawn(str(PET))
 
 
-def set_shell(theme):
-    """Quickshell themes bring their own bar and notification daemon; every other theme gets mako.
-    Only one thing can own org.freedesktop.Notifications, so the other one is stopped first."""
+def stop_other_shells(theme):
+    """Stop every other theme's Quickshell shell. Before hyprland reloads: a shell still running then puts its own
+    look back on hyprland (liquid sets the window rounding and blur when the config reloads), over this theme's."""
     want = theme["quickshell"]
     for n in themes():
         other = load(n)["quickshell"]
         if other and other != want:
             sh("qs", "kill", "-c", other)
+
+
+def set_shell(theme):
+    """Quickshell themes bring their own bar and notification daemon; every other theme gets mako.
+    Only one thing can own org.freedesktop.Notifications, so the other one is stopped first."""
+    want = theme["quickshell"]
+    stop_other_shells(theme)
     if want:
         sh("pkill", "-x", "mako")
         spawn("qs", "-c", want, "-n")              # -n: does nothing if it's already running
@@ -569,6 +577,7 @@ def apply(name, note=None):
     CURRENT.write_text(name + "\n")
 
     # 4. live reloads (the palette went out first, so the shell's wallpaper wipe starts closer to when these change)
+    stop_other_shells(theme)                     # (first: a leaving shell would put its own look back on hyprland)
     sh("hyprctl", "reload")
     disabled = CONFIG / "waybar" / "disabled"    # toggle.sh won't open the bar while this exists
     if not theme["waybar"]:
@@ -632,6 +641,8 @@ def describe(name):
         "about": about.strip(),
         "current": name == current(),
         "wallpaper": t.get("wallpaper", ""),
+        "qs": t.get("quickshell", ""),          # its Quickshell config, if it runs one (the shell switcher waits on it)
+        "variant_of": t.get("variant_of", ""),  # a version of another theme (pure-dark of pure): not a card of its own
         "live": bool(t.get("wallpaper_cmd")),
         "shell": "quickshell" if t["quickshell"] else "waybar" if t["waybar"] else "none",
         "blur": t["hypr"]["blur"] == "true",
@@ -693,7 +704,7 @@ def main():
     elif arg == "reload":
         apply(current() or sys.exit("rice: no current theme"))
     else:
-        apply(arg)
+        apply(arg, note=False if "--quiet" in sys.argv else None)   # --quiet: no "Rice switched" (dark mode's toggle)
 
 
 if __name__ == "__main__":

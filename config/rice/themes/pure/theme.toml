@@ -1,0 +1,66 @@
+# Pure — creamy white, warm charcoal ink. Its own Quickshell shell, PureShell (~/.config/quickshell/pureshell):
+# a cream island in the middle of the top edge that's the clock and grows into what's happening (or a full bar,
+# in its settings). Google Sans Flex and Material Symbols (both in ~/dotfiles/fonts).
+quickshell = "pureshell"
+waybar = false
+wallpaper_by_shell = true     # PureShell draws the wallpaper (and fades between them)
+wallpaper_picker = true       # any image in ~/Pictures/wallpapers…
+recolour = false              # …and the cream stays cream: a picked wallpaper doesn't tint the theme
+wallpaper = "wallpaper.png"   # the default: warm sand-cream (deliberately not white), a few paler shapes
+wofi_font = '"Google Sans Flex", "Noto Sans CJK JP"'
+pet = false
+mouse = "#edeae4"
+
+[colors]
+bg0 = "#f5f3ef"     # the lightest: cards, popups
+bg1 = "#edeae4"     # the cream itself: the island, the bar, panels
+bg2 = "#e3dfd7"     # pressed, wells, tracks
+bg3 = "#d6d0c5"     # outlines, dividers
+border = "#2a2520"
+accent = "#2a2520"  # the ink: one warm charcoal for text, icons and what's on
+accent2 = "#5c544b" # quieter ink
+fg = "#2a2520"
+dim = "#8d8478"     # secondary text
+bright = "#15120f"
+
+[hypr]
+border_size = 1
+blur = true
+border_active = ["#2a252066"]
+border_angle = 0
+border_inactive = "#2a252014"
+shadow = "#2a252030"
+rounding = 18
+
+# a light terminal: cream with earthy, muted colours
+[term]
+bg = "#edeae4"
+fg = "#2a2520"
+opacity = 0.5     # see-through, frosted by hyprland's blur
+cursor = "#2a2520"
+selection = "#d6d0c5"
+url = "#5a7290"
+color0 = "#2a2520"
+color1 = "#a8553d"
+color2 = "#5f7d4f"
+color3 = "#9c7530"
+color4 = "#4f6886"
+color5 = "#7f5a79"
+color6 = "#4d7b77"
+color7 = "#8d8478"
+color8 = "#5c544b"
+color9 = "#bf6447"
+color10 = "#708f5f"
+color11 = "#b08a3f"
+color12 = "#5f7a9a"
+color13 = "#93698c"
+color14 = "#5d8c87"
+color15 = "#3d3731"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#2a2520"
+logo2 = "#8d8478"
+separator = " · "
+rule = "────────────────────────"
+symbol = "block"

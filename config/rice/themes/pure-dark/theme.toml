@@ -1,0 +1,66 @@
+# Pure Dark — the same as Pure in warm charcoal, the cream (#edeae4) for its text. PureShell recolours itself
+# live; quick settings' Dark mode switches between the two.
+quickshell = "pureshell"
+variant_of = "pure"           # the shell switcher shows it as Pure, not a shell of its own
+waybar = false
+wallpaper_by_shell = true
+wallpaper_picker = true
+recolour = false
+wallpaper = "wallpaper.png"   # the default: warm charcoal, a few softer shapes
+wofi_font = '"Google Sans Flex", "Noto Sans CJK JP"'
+pet = false
+mouse = "#edeae4"
+
+[colors]
+bg0 = "#2b2724"     # cards, popups
+bg1 = "#221f1c"     # the island, the bar, panels
+bg2 = "#35312c"     # pressed, wells, tracks
+bg3 = "#48423b"     # outlines, dividers
+border = "#edeae4"
+accent = "#edeae4"  # the ink: the cream, for text, icons and what's on
+accent2 = "#c9c1b4" # quieter ink
+fg = "#edeae4"
+dim = "#958b7e"     # secondary text
+bright = "#faf8f4"
+
+[hypr]
+border_size = 1
+blur = true
+border_active = ["#edeae455"]
+border_angle = 0
+border_inactive = "#edeae412"
+shadow = "#00000060"
+rounding = 18
+
+# a dark terminal: charcoal with soft, warm colours
+[term]
+bg = "#1d1a17"
+fg = "#edeae4"
+opacity = 0.5
+cursor = "#edeae4"
+selection = "#48423b"
+url = "#9db4cf"
+color0 = "#2b2724"
+color1 = "#d98a6c"
+color2 = "#a6bf8f"
+color3 = "#dcb771"
+color4 = "#8fa8c6"
+color5 = "#c39abb"
+color6 = "#8fbfb8"
+color7 = "#c9c1b4"
+color8 = "#5c554d"
+color9 = "#e6a083"
+color10 = "#b8cf9f"
+color11 = "#e8c987"
+color12 = "#a5bbd6"
+color13 = "#d3afcb"
+color14 = "#a5d0c9"
+color15 = "#edeae4"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#edeae4"
+logo2 = "#958b7e"
+separator = " · "
+rule = "────────────────────────"
+symbol = "block"

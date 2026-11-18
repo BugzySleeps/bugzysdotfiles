@@ -7,7 +7,7 @@
 Reads the hook's JSON on stdin for the project folder (and, for `needs`, what it's waiting on), hands it to the
 shell and returns straight away, so it never holds Claude up. Does nothing if the shell isn't running.
 """
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 
 kind = sys.argv[1] if len(sys.argv) > 1 else "done"
 try:
@@ -25,5 +25,13 @@ if kind == "needs":
     msg = (hook.get("message") or "").strip()
     text = "needs your ok" if "permission" in msg.lower() else "needs you"
 
-subprocess.Popen(["qs", "-c", "ekitai", "ipc", "call", "island", "claude", kind, project, text],
+# whichever Quickshell shell the current rice runs (liquid, PureShell…)
+shell = "ekitai"
+try:
+    cur = open(os.path.expanduser("~/.config/rice/current")).read().strip()
+    m = re.search(r'^quickshell\s*=\s*"([^"]+)"', open(os.path.expanduser(f"~/.config/rice/themes/{cur}/theme.toml")).read(), re.M)
+    shell = m.group(1) if m else shell
+except OSError:
+    pass
+subprocess.Popen(["qs", "-c", shell, "ipc", "call", "island", "claude", kind, project, text],
                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)

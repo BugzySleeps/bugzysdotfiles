@@ -294,6 +294,8 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher next"))  -- window switcher (let go of ALT to switch)
 hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher prev"))
 hl.bind(mainMod .. " + O",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc overview toggle"))  -- every workspace at once; drag windows between them
+hl.bind(mainMod .. " + A",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc panel toggle quick"))  -- quick settings (PureShell)
+hl.bind(mainMod .. " + ALT + S",   hl.dsp.exec_cmd("qs -c switcher -n"))  -- the shell switcher (every rice, without a flash)
 hl.bind(mainMod .. " + I",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc settings toggle"))  -- settings
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("~/.config/rice/qs-ipc clipboard toggle"))  -- clipboard history
 hl.bind(mainMod .. " + Escape",    hl.dsp.exec_cmd("~/.config/rice/rice lock"))  -- lock the screen
@@ -440,6 +442,28 @@ hl.layer_rule({
     match        = { namespace = "^ekitai-(bar|panel|launcher|osd|toasts|desktop|picker)$" },
     blur         = true,
     ignore_alpha = 0.3,
+})
+
+-- PureShell (the pure rice) animates its own island, bar and panels, and frosts what's behind them
+hl.layer_rule({
+    name    = "pure-shell-no-anim",
+    match   = { namespace = "^pure-" },
+    no_anim = true,
+})
+hl.layer_rule({
+    name         = "pure-frost",
+    match        = { namespace = "^pure-(island|bar|panel|launcher|toasts)$" },
+    blur         = true,
+    ignore_alpha = 0.2,
+})
+
+-- The shell switcher (SUPER + ALT + S, ~/.config/quickshell/switcher) fades itself; frost behind its cards
+hl.layer_rule({
+    name    = "rice-switcher",
+    match   = { namespace = "^rice-switcher$" },
+    no_anim = true,
+    blur    = true,
+    ignore_alpha = 0.1,
 })
 
 -- Blur behind waybar

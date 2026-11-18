@@ -1,3 +1,9 @@
 [submodule "config/quickshell/ekitai"]
 	path = config/quickshell/ekitai
 	url = https://github.com/BugzySleeps/liquid.git
+[submodule "config/quickshell/pureshell"]
+	path = config/quickshell/pureshell
+	url = https://github.com/BugzySleeps/PureShell.git
+[submodule "config/quickshell/switcher"]
+	path = config/quickshell/switcher
+	url = https://github.com/BugzySleeps/ShellSwitcher.git
