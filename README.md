@@ -34,9 +34,11 @@ The installer goes through these steps and asks before anything that needs sudo:
    - fastfetch in new kitty windows
    - tty1 autologin, so hyprlock is your login screen (systemd only, off unless you say yes or
      pass `--autologin`)
+   - DayBetter Bluetooth LED strips, and the mouse's LEDs, in the wallpaper's colour, pulsing with the music
+     (a user service, `config/rice/leds`; off unless you say yes or pass `--leds`)
 
 Run it again any time: it skips what's already done. Options go after `bash -s --` (or after
-`./install.sh`): `--yes`, `--no-packages`, `--no-pet`, `--autologin`, `--rice NAME`.
+`./install.sh`): `--yes`, `--no-packages`, `--no-pet`, `--autologin`, `--leds`, `--rice NAME`.
 
 Because the configs are symlinks, edits you make in `~/.config/...` land in this repo.
 

@@ -12,13 +12,14 @@
 #   4. applies a rice (theme)
 #   5. installs hyprland-pets, the pet in the pull-down tab
 #   6. optional extras: start Hyprland when you log in on tty1, fastfetch in new kitty windows,
-#      and tty1 autologin so hyprlock is your login screen
+#      tty1 autologin so hyprlock is your login screen, and LED strips in the wallpaper's colour
 #
 # Options:
 #   --yes            answer yes to everything (autologin still needs --autologin)
 #   --no-packages    don't install packages
 #   --no-pet         don't install hyprland-pets
 #   --autologin      also set up tty1 autologin + hyprlock greeter (systemd only)
+#   --leds           also set up DayBetter Bluetooth LED strips (and the mouse) in the wallpaper's colour
 #   --rice NAME      which rice to apply (default: the one you're on, else leaf; also RICE=NAME)
 set -u
 
@@ -29,7 +30,7 @@ MARK="bugzysdotfiles (added by install.sh)"
 RICE=${RICE:-}
 ARGS=("$@")
 
-yes=0 packages=1 pet=1 autologin=0
+yes=0 packages=1 pet=1 autologin=0 leds=0
 while (( $# )); do
     case $1 in
         -y | --yes) yes=1 ;;
@@ -37,8 +38,9 @@ while (( $# )); do
         --packages) ;;   # the old opt-in flag; packages are the default now
         --no-pet) pet=0 ;;
         --autologin) autologin=1 ;;
+        --leds) leds=1 ;;
         --rice) shift; RICE=${1:?--rice needs a name} ;;
-        -h | --help) sed -n '2,25p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h | --help) sed -n '2,26p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "unknown option: $1 (try --help)"; exit 2 ;;
     esac
     shift
@@ -395,6 +397,38 @@ elif (( autologin )) || { (( ! yes )) && ask "Log in automatically on tty1, with
     sed "s/--autologin bugzy/--autologin $USER/" "$DOT/system/getty-tty1-autologin.conf" \
         | sudo install -Dm644 /dev/stdin "$dropin" && sudo systemctl daemon-reload \
         && good "tty1 logs you in, Hyprland opens hyprlock first (undo: sudo rm $dropin)"
+fi
+
+# LED strips (config/rice/leds): a user service keeping DayBetter Bluetooth strips, and the mouse's LEDs, in the
+# colour liquid shows. Off unless asked: most people don't have the strips. bleak goes in a venv of its own.
+venv=$HOME/.local/share/leds-venv
+unit=$HOME/.config/systemd/user/leds.service
+if [[ -L $unit && -x $venv/bin/python ]]; then
+    good "LED strips are set up (systemctl --user status leds)"
+elif (( leds )) || { (( ! yes )) && ask "Set up DayBetter Bluetooth LED strips to follow the wallpaper's colour?" n; }; then
+    if [[ ! -d /run/systemd/system ]]; then
+        meh "the LED service needs systemd; skipped (run ~/.config/rice/leds/leds yourself)"
+    elif ! command -v python3 >/dev/null; then
+        bad "LED strips need python3"
+    else
+        command -v bluetoothctl >/dev/null || meh "install BlueZ (bluez) for Bluetooth; the service waits for it"
+        if [[ -x $venv/bin/python ]] || python3 -m venv "$venv"; then
+            if "$venv/bin/pip" install -q bleak; then
+                link "$DOT/config/rice/leds/leds.service" "$unit"
+                systemctl --user daemon-reload && systemctl --user enable -q --now leds.service \
+                    && good "LED strips follow the wallpaper (logs: journalctl --user -u leds -f)"
+                if command -v bluetoothctl >/dev/null && ! systemctl is-active -q bluetooth \
+                    && ask "Bluetooth is off. Turn it on (now and at boot)?"; then
+                    sudo systemctl enable --now bluetooth && good "Bluetooth is on"
+                fi
+                meh "close the DayBetter phone app: a strip takes one connection at a time"
+            else
+                bad "couldn't install bleak into $venv"
+            fi
+        else
+            bad "couldn't make a Python venv at $venv (on Debian: apt install python3-venv)"
+        fi
+    fi
 fi
 
 bold "Done"
