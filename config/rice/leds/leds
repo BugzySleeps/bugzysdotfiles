@@ -1,0 +1,4 @@
+#!/bin/sh
+# leds: DayBetter LED strips in the wallpaper's colour (see leds.py). Python and bleak live in their own venv:
+#   python3 -m venv ~/.local/share/leds-venv && ~/.local/share/leds-venv/bin/pip install bleak
+exec "$HOME/.local/share/leds-venv/bin/python" "$(dirname "$(readlink -f "$0")")/leds.py" "$@"

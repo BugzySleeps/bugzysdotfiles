@@ -1,0 +1,11 @@
+[Unit]
+Description=LED strips and the mouse in the wallpaper's colour (rice leds)
+After=bluetooth.target
+
+[Service]
+ExecStart=%h/.config/rice/leds/leds
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
