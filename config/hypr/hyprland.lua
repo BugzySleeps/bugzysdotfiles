@@ -313,6 +313,7 @@ hl.bind(mainMod .. " + period",    hl.dsp.exec_cmd("~/.config/rice/qs-ipc launch
 hl.bind("Print",         hl.dsp.exec_cmd("~/.local/bin/screenshot region"))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("~/.local/bin/screenshot full"))
 hl.bind("ALT + Print",   hl.dsp.exec_cmd("~/.local/bin/screenshot window"))
+hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("~/.local/bin/screenshot bar"))  -- the screenshot toolbar (MacShell: like ⌘⇧5)
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
@@ -420,6 +421,15 @@ hl.window_rule({
     center = true,
 })
 
+-- MacShell's System Settings: a floating window in the middle, like on a Mac
+hl.window_rule({
+    name   = "float-macshell-settings",
+    match  = { title = "^System Settings$" },
+    float  = true,
+    size   = "880 620",
+    center = true,
+})
+
 -- Float Larry's settings window (right-click his tab, or hyprland-pets --settings)
 hl.window_rule({
     name   = "float-larry-settings",
@@ -455,6 +465,19 @@ hl.layer_rule({
     match        = { namespace = "^pure-(island|bar|panel|launcher|toasts)$" },
     blur         = true,
     ignore_alpha = 0.2,
+})
+
+-- MacShell (the mac rice) animates its own menus and panels; frost behind the menu bar, dock, menus and panels
+hl.layer_rule({
+    name    = "mac-shell-no-anim",
+    match   = { namespace = "^mac-" },
+    no_anim = true,
+})
+hl.layer_rule({
+    name         = "mac-frost",
+    match        = { namespace = "^mac-(bar|dock|menu|panel|spotlight|banners)$" },
+    blur         = true,
+    ignore_alpha = 0.05,
 })
 
 -- The shell switcher (SUPER + ALT + S, ~/.config/quickshell/switcher) fades itself; frost behind its cards

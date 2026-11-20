@@ -1,0 +1,11 @@
+[Unit]
+Description=Spotify (on your phone) as a media player for the shell (rice spotify)
+After=network-online.target
+
+[Service]
+ExecStart=%h/.config/rice/spotify/spotify
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target

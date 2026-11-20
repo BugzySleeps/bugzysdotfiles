@@ -1,0 +1,4 @@
+#!/bin/sh
+# spotify: your Spotify (playing on your phone) as a media player here, for the shell to react to (see spotify.py).
+# Runs in the venv the LED strips use (it has dbus-fast): ~/.local/share/leds-venv
+exec "$HOME/.local/share/leds-venv/bin/python" "$(dirname "$(readlink -f "$0")")/spotify.py" "$@"

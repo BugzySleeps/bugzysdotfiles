@@ -1,0 +1,66 @@
+# Mac — a macOS-style desktop. Its own Quickshell shell, MacShell (~/.config/quickshell/macshell): the menu bar
+# along the top (the logo menu, the focused app and its menus, the status icons, Control Centre, the clock), the
+# dock at the bottom, Spotlight (SUPER+R), notification banners. SF Pro if it's installed, else Inter.
+# Control Centre's Dark Mode switches to mac-dark.
+quickshell = "macshell"
+waybar = false
+wallpaper_by_shell = true
+wallpaper_picker = true
+recolour = false
+wallpaper = "wallpaper.jpg"   # original artwork: layered hills of colour, day
+wofi_font = '"SF Pro Text", "Inter"'
+pet = false
+mouse = "#0a84ff"
+
+[colors]
+bg0 = "#ffffff"     # popups, cards
+bg1 = "#f6f6f6"     # the menu bar, panels
+bg2 = "#e8e8ed"     # wells, tracks
+bg3 = "#d2d2d7"     # hairlines
+border = "#1d1d1f"
+accent = "#0a84ff"  # the system blue: selection, what's on
+accent2 = "#6e6e73"
+fg = "#1d1d1f"
+dim = "#86868b"
+bright = "#000000"
+
+[hypr]
+border_size = 1
+blur = true
+border_active = ["#00000030"]
+border_angle = 0
+border_inactive = "#00000018"
+shadow = "#00000055"
+rounding = 18
+
+[term]
+bg = "#ffffff"
+fg = "#1d1d1f"
+opacity = 0.5
+cursor = "#1d1d1f"
+selection = "#b3d7ff"
+url = "#0a60d0"
+color0 = "#1d1d1f"
+color1 = "#c41a16"
+color2 = "#007400"
+color3 = "#826b28"
+color4 = "#0b4fca"
+color5 = "#a41daf"
+color6 = "#2a7e9b"
+color7 = "#86868b"
+color8 = "#6e6e73"
+color9 = "#e0342d"
+color10 = "#2e9c31"
+color11 = "#a88a2a"
+color12 = "#2f6fe0"
+color13 = "#b844c2"
+color14 = "#3a99b9"
+color15 = "#3a3a3c"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#0a84ff"
+logo2 = "#86868b"
+separator = " · "
+rule = "────────────────────────"
+symbol = "block"

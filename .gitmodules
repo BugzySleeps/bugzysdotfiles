@@ -7,3 +7,6 @@
 [submodule "config/quickshell/switcher"]
 	path = config/quickshell/switcher
 	url = https://github.com/BugzySleeps/ShellSwitcher.git
+[submodule "config/quickshell/macshell"]
+	path = config/quickshell/macshell
+	url = https://github.com/BugzySleeps/MacShell.git

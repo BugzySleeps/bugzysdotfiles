@@ -1,0 +1,64 @@
+# Mac Dark — Mac at night: the same shell in dark glass, a night wallpaper. Control Centre's Dark Mode switches back.
+quickshell = "macshell"
+variant_of = "mac"            # the shell switcher shows it as Mac, not a shell of its own
+waybar = false
+wallpaper_by_shell = true
+wallpaper_picker = true
+recolour = false
+wallpaper = "wallpaper.jpg"   # original artwork: layered hills of colour, night
+wofi_font = '"SF Pro Text", "Inter"'
+pet = false
+mouse = "#0a84ff"
+
+[colors]
+bg0 = "#2c2c2e"
+bg1 = "#1e1e1e"
+bg2 = "#3a3a3c"
+bg3 = "#48484a"
+border = "#f5f5f7"
+accent = "#0a84ff"
+accent2 = "#aeaeb2"
+fg = "#f5f5f7"
+dim = "#8e8e93"
+bright = "#ffffff"
+
+[hypr]
+border_size = 1
+blur = true
+border_active = ["#ffffff30"]
+border_angle = 0
+border_inactive = "#ffffff14"
+shadow = "#000000aa"
+rounding = 18
+
+[term]
+bg = "#1e1e1e"
+fg = "#f5f5f7"
+opacity = 0.5
+cursor = "#f5f5f7"
+selection = "#3f638b"
+url = "#5ea9ff"
+color0 = "#1e1e1e"
+color1 = "#ff6961"
+color2 = "#5fd068"
+color3 = "#e6c45a"
+color4 = "#5ea9ff"
+color5 = "#d68cf0"
+color6 = "#5ad1e0"
+color7 = "#aeaeb2"
+color8 = "#636366"
+color9 = "#ff8a80"
+color10 = "#7be38a"
+color11 = "#f2d675"
+color12 = "#8ac2ff"
+color13 = "#e3a9f5"
+color14 = "#86e3ee"
+color15 = "#f5f5f7"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#0a84ff"
+logo2 = "#8e8e93"
+separator = " · "
+rule = "────────────────────────"
+symbol = "block"

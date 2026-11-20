@@ -7,9 +7,22 @@ conf=$1
 tmp=$(mktemp -t cava-run.XXXXXX)
 pid=
 
-# the output the sound is going to (see active-sink)
+# what to listen to: the output the sound is going to (see active-sink), or, while Spotify plays on your phone
+# (spotify/: the state it writes) and nothing plays here, the microphone, which hears the phone in the room.
+# The shell's settings turn that off (phoneMic: false in ~/.local/state/ekitai/settings.json).
+mic() {
+    pactl list sources short 2>/dev/null | awk '$2 !~ /\.monitor$/ {print $2}' \
+        | { grep -m1 -i usb || pactl get-default-source; }
+}
 pick() {
-    echo "$(~/.config/rice/active-sink).monitor"
+    local st=${XDG_STATE_HOME:-$HOME/.local/state}
+    if [ "$(jq -r .playing "$st/rice/spotify-now.json" 2>/dev/null)" = true ] \
+        && [ "$(jq -r '.phoneMic // true' "$st/ekitai/settings.json" 2>/dev/null)" != false ] \
+        && [ "$(pactl -f json list sink-inputs 2>/dev/null | jq 'any(.[]; .corked | not)')" != true ]; then
+        mic
+    else
+        echo "$(~/.config/rice/active-sink).monitor"
+    fi
 }
 
 trap '[ -n "$pid" ] && kill "$pid" 2>/dev/null; rm -f "$tmp"; exit' TERM INT HUP EXIT

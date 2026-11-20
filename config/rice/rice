@@ -540,6 +540,26 @@ def write_palette(theme):
     tmp.replace(PALETTE)
 
 
+# the last version used of each theme (Mac → mac-dark): the shell switcher goes back to that one, not the base
+VARIANTS = WALLSTATE / "variants.json"
+
+
+def variants():
+    try:
+        return json.loads(VARIANTS.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def remember_variant(name, theme):
+    base = theme.get("variant_of") or name
+    v = variants()
+    if v.get(base) != name:
+        v[base] = name
+        WALLSTATE.mkdir(parents=True, exist_ok=True)
+        VARIANTS.write_text(json.dumps(v, indent=1) + "\n")
+
+
 def apply(name, note=None):
     """note: (title, body) for the notification; False for none."""
     theme = load(name)
@@ -575,6 +595,7 @@ def apply(name, note=None):
     set_pet(theme)
 
     CURRENT.write_text(name + "\n")
+    remember_variant(name, theme)
 
     # 4. live reloads (the palette went out first, so the shell's wallpaper wipe starts closer to when these change)
     stop_other_shells(theme)                     # (first: a leaving shell would put its own look back on hyprland)
@@ -643,6 +664,7 @@ def describe(name):
         "wallpaper": t.get("wallpaper", ""),
         "qs": t.get("quickshell", ""),          # its Quickshell config, if it runs one (the shell switcher waits on it)
         "variant_of": t.get("variant_of", ""),  # a version of another theme (pure-dark of pure): not a card of its own
+        "last": variants().get(name, name),     # the version of it used last (the switcher goes back to that)
         "live": bool(t.get("wallpaper_cmd")),
         "shell": "quickshell" if t["quickshell"] else "waybar" if t["waybar"] else "none",
         "blur": t["hypr"]["blur"] == "true",

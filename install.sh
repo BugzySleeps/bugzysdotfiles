@@ -400,7 +400,7 @@ elif (( autologin )) || { (( ! yes )) && ask "Log in automatically on tty1, with
 fi
 
 # LED strips (config/rice/leds): a user service keeping DayBetter Bluetooth strips, and the mouse's LEDs, in the
-# colour liquid shows. Off unless asked: most people don't have the strips. bleak goes in a venv of its own.
+# colour liquid shows. Off unless asked: most people don't have the strips. bleak (Bluetooth) and pillow (the album colours) go in a venv of their own.
 venv=$HOME/.local/share/leds-venv
 unit=$HOME/.config/systemd/user/leds.service
 if [[ -L $unit && -x $venv/bin/python ]]; then
@@ -413,7 +413,7 @@ elif (( leds )) || { (( ! yes )) && ask "Set up DayBetter Bluetooth LED strips t
     else
         command -v bluetoothctl >/dev/null || meh "install BlueZ (bluez) for Bluetooth; the service waits for it"
         if [[ -x $venv/bin/python ]] || python3 -m venv "$venv"; then
-            if "$venv/bin/pip" install -q bleak; then
+            if "$venv/bin/pip" install -q bleak pillow; then
                 link "$DOT/config/rice/leds/leds.service" "$unit"
                 systemctl --user daemon-reload && systemctl --user enable -q --now leds.service \
                     && good "LED strips follow the wallpaper (logs: journalctl --user -u leds -f)"
@@ -423,7 +423,7 @@ elif (( leds )) || { (( ! yes )) && ask "Set up DayBetter Bluetooth LED strips t
                 fi
                 meh "close the DayBetter phone app: a strip takes one connection at a time"
             else
-                bad "couldn't install bleak into $venv"
+                bad "couldn't install bleak + pillow into $venv"
             fi
         else
             bad "couldn't make a Python venv at $venv (on Debian: apt install python3-venv)"

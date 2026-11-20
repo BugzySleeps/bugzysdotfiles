@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# screenshot [region|full|window] — save to ~/Pictures/Screenshots and copy to clipboard
+# screenshot [region|full|window|bar] — save to ~/Pictures/Screenshots and copy to clipboard
 # region: with the Quickshell rice running, the shot opens in its editor first (draw, crop, then save/copy)
 # needs: grim slurp wl-clipboard
 
@@ -16,6 +16,16 @@ for dep in grim slurp wl-copy; do
         exit 1
     fi
 done
+
+# MacShell does it all itself, the macOS way (the toolbar, a floating thumbnail, Markup): hand it over when it's the
+# shell running (the others don't answer "shot take", and carry on below)
+case $mode in region) want=area ;; full) want=full ;; window) want=window ;; bar) want=bar ;; *) want= ;; esac
+# (asked only if it has "shot take": qs ipc call exits 0 even when the function isn't there)
+shell=$(sed -n 's/^quickshell *= *"\([^"]*\)".*/\1/p' ~/.config/rice/themes/"$(cat ~/.config/rice/current 2>/dev/null)"/theme.toml 2>/dev/null)
+if [ -n "$want" ] && [ -n "$shell" ] && qs -c "$shell" ipc show 2>/dev/null | grep -q 'function take(what'; then
+    qs -c "$shell" ipc call shot take "$want" >/dev/null 2>&1 && exit 0
+fi
+[ "$mode" = bar ] && mode=region
 
 case $mode in
     region) geom=$(slurp -d -b 00000066 -c ffffffcc) || exit 0 ;;   # Esc cancels
