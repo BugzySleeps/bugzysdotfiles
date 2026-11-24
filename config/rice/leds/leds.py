@@ -1,7 +1,7 @@
 """leds: keeps DayBetter LED strips (and the mouse's LEDs) in the desktop's colours.
   · music playing (cmus, or the phone's Spotify): the album cover's colours (album.py). A P065 strip is one colour
     at a time (one zone), so it moves through them with the music: a flash and the next colour on each beat, the
-    bass breathing in between; the mouse takes the album's second colour, so the two lights differ.
+    bass breathing in between. The mouse never follows the album: it keeps the theme's own `mouse` colour.
   · otherwise the shell's colour: liquid's (it writes ~/.local/state/ekitai/leds.json: the wallpaper's or a scene's
     colour, and whether to pulse), or for any other shell the theme's accent (~/.local/state/rice/palette.json).
 
@@ -238,16 +238,26 @@ async def drop(addr):
         p.kill()
 
 
+def theme_mouse():
+    """the current theme's mouse colour (its `mouse`, else its accent), from its theme.toml"""
+    import tomllib
+    try:
+        name = (Path.home() / ".config/rice/current").read_text().strip()
+        t = tomllib.loads((Path.home() / ".config/rice/themes" / name / "theme.toml").read_text())
+        return t.get("mouse") or t.get("colors", {}).get("accent")
+    except Exception:
+        return wanted().get("colour")
+
+
 async def mouse():
-    """the mouse's LEDs (ratbag, ../mouse-color) in the same colour: `rice` only sets them on a theme switch, so album
-    colours and a scene's picked colour would leave them behind. Once the colour has settled (ratbagctl is slow, and
-    writes the mouse's profile), the plain screen colour: the mouse's LED isn't the strip."""
+    """the mouse's LEDs (ratbag, ../mouse-color): always the theme's own mouse colour, never the album's (the user
+    wants the mouse to stay put while music plays). `rice` sets it on a theme switch; this only puts it back if
+    something else changed it (and catches a theme switch rice's own call missed). ratbagctl is slow and rewrites the
+    mouse's profile, so a colour has to settle for a moment first."""
     done, seen, since = None, None, 0.0
     loop = asyncio.get_running_loop()
     while True:
-        # the album's second colour while music plays (the strip has the first), else the shell's
-        cols = album.colours if album.playing else []
-        c = cols[1] if len(cols) > 1 else cols[0] if cols else wanted().get("colour")
+        c = theme_mouse()
         if c != seen:
             seen, since = c, loop.time()
         if c and c != done and loop.time() - since > 1.5:
@@ -256,7 +266,7 @@ async def mouse():
             await p.wait()
             log("mouse", c)
             done = c
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(2)
 
 
 async def main():

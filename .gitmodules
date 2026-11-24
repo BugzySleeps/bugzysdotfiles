@@ -10,3 +10,6 @@
 [submodule "config/quickshell/macshell"]
 	path = config/quickshell/macshell
 	url = https://github.com/BugzySleeps/MacShell.git
+[submodule "config/quickshell/bloom"]
+	path = config/quickshell/bloom
+	url = https://github.com/BugzySleeps/bloom.git

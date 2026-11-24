@@ -1,0 +1,66 @@
+# Bloom — Material 3 Expressive shapes. Its own Quickshell shell, Bloom (~/.config/quickshell/bloom): floating
+# workspaces and clock, a dynamic island in the middle that pulls down into music, calendar, stats and quick
+# settings; shaped desktop widgets; lyrics and a visualizer on the wallpaper. The shell picks its own colours
+# (a preset or from the wallpaper) and recolours Hyprland's border to match; these are the starting ones.
+quickshell = "bloom"
+waybar = false
+wallpaper_by_shell = true     # Bloom draws the wallpaper (picked in the island's palette page)
+wallpaper_picker = false
+recolour = false
+wallpaper = "wallpaper.png"   # olive-gold dusk with soft shapes (tools/wallpaper.py)
+wofi_font = '"Google Sans Flex"'
+pet = false
+mouse = "#d6bc78"
+
+[colors]
+bg0 = "#1f1d16"
+bg1 = "#16150f"
+bg2 = "#2a2820"
+bg3 = "#3a372b"
+border = "#d6bc78"
+accent = "#d6bc78"
+accent2 = "#c2c79a"
+fg = "#ece6d6"
+dim = "#b3ab95"
+bright = "#fffaf0"
+
+[hypr]
+border_size = 2
+blur = true
+border_active = ["#d6bc78cc"]
+border_angle = 0
+border_inactive = "#3a372b55"
+shadow = "#00000055"
+rounding = 20
+
+[term]
+bg = "#16150f"
+fg = "#ece6d6"
+opacity = 0.88
+cursor = "#d6bc78"
+selection = "#3a372b"
+url = "#9fc0d8"
+color0 = "#2a2820"
+color1 = "#e08a6f"
+color2 = "#a9c27f"
+color3 = "#e0c068"
+color4 = "#8fb2cf"
+color5 = "#c79bc0"
+color6 = "#8cc3b5"
+color7 = "#d9d2bf"
+color8 = "#5a5646"
+color9 = "#eb9f86"
+color10 = "#bcd395"
+color11 = "#ecd083"
+color12 = "#a6c3dc"
+color13 = "#d6b1d0"
+color14 = "#a2d3c7"
+color15 = "#ece6d6"
+
+[fastfetch]
+logo = "gentoo_small"
+logo1 = "#d6bc78"
+logo2 = "#b3ab95"
+separator = " · "
+rule = "────────────────────────"
+symbol = "block"

@@ -293,6 +293,7 @@ end)
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher next"))  -- window switcher (let go of ALT to switch)
 hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/rice/qs-ipc switcher prev"))
+hl.bind(mainMod .. " + B",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc activity toggle"))  -- Activity: the system as bubbles (NostalgiaShell)
 hl.bind(mainMod .. " + O",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc overview toggle"))  -- every workspace at once; drag windows between them
 hl.bind(mainMod .. " + A",         hl.dsp.exec_cmd("~/.config/rice/qs-ipc panel toggle quick"))  -- quick settings (PureShell)
 hl.bind(mainMod .. " + ALT + S",   hl.dsp.exec_cmd("qs -c switcher -n"))  -- the shell switcher (every rice, without a flash)
@@ -478,6 +479,38 @@ hl.layer_rule({
     match        = { namespace = "^mac-(bar|dock|menu|panel|spotlight|banners)$" },
     blur         = true,
     ignore_alpha = 0.05,
+})
+
+-- NostalgiaShell (the nostalgia rice) animates its own bar, dock and panels; frost behind the Home Menu and panels
+hl.layer_rule({
+    name    = "nostalgia-shell-no-anim",
+    match   = { namespace = "^nostalgia-" },
+    no_anim = true,
+})
+hl.layer_rule({
+    name         = "nostalgia-glass",
+    match        = { namespace = "^nostalgia-(bar|dock|island|side)$" },  -- the bar's, dock's and island's smoked glass
+    blur         = true,
+    ignore_alpha = 0.25,
+})
+hl.layer_rule({
+    name         = "nostalgia-desk-frost",
+    match        = { namespace = "^nostalgia-desk$" },   -- the desktop grid's tiles: frosted over a busy wallpaper
+    blur         = true,
+    ignore_alpha = 0.3,                                  -- (not the faint cursor glow round them)
+})
+hl.layer_rule({
+    name         = "nostalgia-frost",
+    match        = { namespace = "^nostalgia-(power)$" },  -- not the Home Menu: blurring the whole screen behind it lagged
+    blur         = true,
+    ignore_alpha = 0.1,
+})
+
+-- Bloom (the bloom rice) animates its own island, panels and widgets
+hl.layer_rule({
+    name    = "bloom-shell-no-anim",
+    match   = { namespace = "^bloom-" },
+    no_anim = true,
 })
 
 -- The shell switcher (SUPER + ALT + S, ~/.config/quickshell/switcher) fades itself; frost behind its cards
