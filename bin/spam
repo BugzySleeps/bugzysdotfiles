@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# spam — flood the screen with mpv windows of a video, "virus" style.
+#
+#   spam <video> [count]    spawn <count> (default 20) floating mpv windows
+#   spam stop               kill every spam window
+#
+# Ctrl+C in the terminal also kills them all.
+
+APP_ID="spam-mpv"
+
+die() { echo "spam: $*" >&2; exit 1; }
+
+kill_all() {
+    pkill -f -- "--wayland-app-id=$APP_ID" 2>/dev/null
+}
+
+if [[ $1 == stop || $1 == kill ]]; then
+    kill_all
+    echo "🧹 disinfected."
+    exit 0
+fi
+
+[[ -n $1 ]] || die "usage: spam <video> [count]  |  spam stop"
+video=$1
+count=${2:-20}
+[[ -f $video || $video == *://* ]] || die "no such file: $video"
+[[ $count =~ ^[0-9]+$ ]] || die "count must be a number"
+
+for cmd in mpv hyprctl jq; do
+    command -v "$cmd" >/dev/null || die "need $cmd"
+done
+
+# Focused monitor geometry (logical px).
+read -r mon_x mon_y mon_w mon_h < <(hyprctl monitors -j | jq -r '
+    .[] | select(.focused) |
+    "\(.x) \(.y) \((.width / .scale) | floor) \((.height / .scale) | floor)"')
+
+# Warn if there's nothing to hear.
+if [[ -f $video ]] && command -v ffprobe >/dev/null &&
+   [[ -z $(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 "$video") ]]; then
+    echo "🔇 heads up: $video has no audio track, so there's nothing to hear."
+fi
+
+trap 'echo; kill_all; echo "🧹 disinfected."; exit 0' INT TERM
+
+# Wait for the window of a given pid to show up, print its address.
+addr_for_pid() {
+    local pid=$1 addr
+    for _ in $(seq 40); do
+        addr=$(hyprctl clients -j | jq -r --argjson p "$pid" \
+            '.[] | select(.pid == $p) | .address' | head -n1)
+        [[ -n $addr ]] && { echo "$addr"; return; }
+        sleep 0.1
+    done
+}
+
+# Random size + position. Pass "float" as $2 for a fresh (tiled) window.
+# Hyprland 0.57 dispatchers are Lua: hl.dsp.window.*({ ... }).
+place() {
+    local addr=$1 w h x y win cmds=""
+    w=$(( 260 + RANDOM % 300 ))
+    h=$(( w * 9 / 16 ))
+    x=$(( mon_x + RANDOM % (mon_w - w) ))
+    y=$(( mon_y + RANDOM % (mon_h - h) ))
+    win="window = \"address:$addr\""
+    [[ $2 == float ]] && cmds="dispatch hl.dsp.window.float({ action = \"toggle\", $win }) ; "
+    cmds+="dispatch hl.dsp.window.resize({ $win, x = $w, y = $h, relative = false }) ; "
+    cmds+="dispatch hl.dsp.window.move({ $win, x = $x, y = $y, relative = false })"
+    hyprctl --batch "$cmds" >/dev/null
+}
+
+msgs=(
+    "injecting payload"
+    "bypassing firewall (it was off anyway)"
+    "downloading more RAM"
+    "replicating"
+    "encrypting your memes"
+    "contacting mothership"
+    "installing BonziBuddy"
+    "deleting System32 (jk)"
+    "mining dogecoin"
+    "achieving sentience"
+)
+
+echo "☣️  INFECTION STARTED — Ctrl+C or 'spam stop' to clean up"
+addrs=()
+delay=0.6
+for (( i = 1; i <= count; i++ )); do
+    mpv --wayland-app-id="$APP_ID" \
+        --title="☣ VIRUS.EXE ($i) ☣" \
+        --loop-file=inf \
+        --start="$(( RANDOM % 80 ))%" \
+        --volume="$(( 80 + RANDOM % 21 ))" \
+        --force-window=immediate \
+        --no-terminal \
+        "$video" 2>/dev/null &
+    pid=$!
+
+    addr=$(addr_for_pid "$pid")
+    if [[ -n $addr ]]; then
+        place "$addr" float
+        addrs+=("$addr")
+    fi
+
+    printf '[%3d/%d] %s...\n' "$i" "$count" "${msgs[RANDOM % ${#msgs[@]}]}"
+
+    # Spawn faster and faster.
+    sleep "$delay"
+    delay=$(awk -v d="$delay" 'BEGIN { d *= 0.85; if (d < 0.05) d = 0.05; print d }')
+done
+
+echo "💀 system fully compromised. windows will now wander around."
+
+# Chaos mode: keep shuffling random windows until stopped.
+while pgrep -f -- "--wayland-app-id=$APP_ID" >/dev/null; do
+    # Drop windows the user closed.
+    live=$(hyprctl clients -j | jq -r '.[].address')
+    alive=()
+    for a in "${addrs[@]}"; do
+        grep -qx "$a" <<<"$live" && alive+=("$a")
+    done
+    addrs=("${alive[@]}")
+    (( ${#addrs[@]} )) || break
+
+    place "${addrs[RANDOM % ${#addrs[@]}]}"
+    sleep 0.4
+done
+
+echo "🧹 all windows closed. you survived."
