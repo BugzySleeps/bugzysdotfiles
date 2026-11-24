@@ -241,8 +241,15 @@ async def drop(addr):
 def theme_mouse():
     """the current theme's mouse colour (its `mouse`, else its accent), from its theme.toml"""
     import tomllib
+    if shell() == "bloom":    # Bloom's colour follows its wallpaper/preset; it writes the live one here
+        try:
+            c = (STATE / "bloom/mouse").read_text().strip()
+            if c:
+                return c
+        except Exception:
+            pass
     try:
-        name = (Path.home() / ".config/rice/current").read_text().strip()
+        name =(Path.home() / ".config/rice/current").read_text().strip()
         t = tomllib.loads((Path.home() / ".config/rice/themes" / name / "theme.toml").read_text())
         return t.get("mouse") or t.get("colors", {}).get("accent")
     except Exception:
